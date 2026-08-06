@@ -1,46 +1,40 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
+  FaSearch,
   FaHeart,
-  FaBookmark,
-  FaRegBookmark,
   FaRegHeart,
   FaRegComment,
-  FaSearch,
-  FaBell,
+  FaBookmark,
+  FaRegBookmark,
   FaPen,
-  FaSignOutAlt,
   FaShareAlt,
-  FaTimes,
-  FaCheck,
   FaUserPlus,
   FaUserCheck,
-  FaFire,
+  FaSignOutAlt,
   FaClock,
-  FaSun,
-  FaMoon,
+  FaArrowLeft,
 } from "react-icons/fa";
-import { MdArrowBack, MdVerified } from "react-icons/md";
 
-// Mock news data (Substack / Medium text-focused articles)
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import PromptBar from "@/components/ui/prompt-bar";
+
 const INITIAL_ARTICLES = [
   {
-    id: 1,
+    id: "1",
     title: "The Architecture of Modern Web Applications in 2026",
     excerpt:
       "Why monolithic simplicity is returning, how edge compute changes state management, and what we learned after building platforms for millions of concurrent readers.",
-    content: `Building web applications in 2026 has reached a fascinating inflection point. For the past decade, microservices and hyper-decoupled frontends were treated as the default architecture for every growing engineering team. However, as infrastructure costs rose and operational complexity exploded, the industry began asking a simple question: "Is this actually making us ship faster?"
+    content: `For a decade, frontend development was defined by extreme fragmentation. We broke apps into dozens of micro-frontends, split state across complex client caches, and treated server-rendering as an afterthought.
 
-### The Renaissance of the Unified Stack
-What we're seeing today isn't a retreat to ancient patterns, but rather a hyper-optimized synthesis of monolithic developer experience combined with edge routing capabilities. Modern bundlers, server-driven UI primitives, and global key-value stores allow developers to maintain a single unified codebase while deploying globally in milliseconds.
+Now, in 2026, the pendulum has swung back toward elegant simplicity. Edge runtimes have made server-side rendering near-instantaneous. Frameworks have unified data fetching and component rendering into cohesive, type-safe paradigms.
 
-### Core Architecture Shift
-1. **Zero-Latency Data Fetching**: Moving query execution directly to edge workers closest to the end user.
-2. **Component-Driven State**: Eliminating global store boilerplate in favor of scoped local state hooks.
-3. **Resilient CSS Standards**: Tailwind v4 and native CSS nesting providing predictable, lightweight layouts without runtime costs.
+In this deep dive, we explore the patterns that define high-scale publishing and web apps today:
+1. Zero-bundle component boundaries
+2. Streaming HTML with optimistic UI hydration
+3. Local-first data caching with real-time sync engines
 
-### What Comes Next?
-As AI tools assist in code generation, the bottleneck shifts from writing code to reading and validating software architecture. Clean, readable codebases with simple abstractions will dominate the next decade of web development.`,
-    category: "Technology",
+By focusing on these core primitives, development teams deliver 10x faster page loads while maintaining clean codebase ergonomics.`,
+    category: "Architecture",
     author: "Elena Rostova",
     authorHandle: "@elena_tech",
     authorAvatar: "ER",
@@ -48,167 +42,150 @@ As AI tools assist in code generation, the bottleneck shifts from writing code t
     readTime: "6 min read",
     claps: 1420,
     commentsCount: 38,
-    isFeatured: true,
-    isBookmarked: false,
     isLiked: false,
+    isBookmarked: false,
+    isFeatured: true,
   },
   {
-    id: 2,
+    id: "2",
     title: "Why Minimalist UI Design Outperforms Heavy Visual Trends",
     excerpt:
       "In an era of cognitive overload, clarity is the ultimate luxury. How stripped-down typography and precise layout hierarchy drive 3x higher user engagement.",
-    content: `When users land on a website, they don't want to decipher a visual maze. They seek immediate answers, seamless navigation, and frictionless readability.
+    content: `Visual noise is the enemy of user retention. When every element on a screen demands attention with bright badges, glowing borders, and competing animations, users experience cognitive fatigue.
 
-### The Psychology of Visual Noise
-Every border, gradient, and floating element consumes cognitive bandwidth. When designing digital products, reduction is often more powerful than addition. By focusing on typography, whitespace, and sharp contrast, you allow the content itself to shine.
+Minimalism in digital design isn't about removing features—it's about intentional focus. By utilizing generous whitespace, consistent typographic scales, and functional color accents, modern interfaces guide the user's eye effortlessly.
 
-### Three Rules for Cleaner Interfaces
-- **Typography First**: Choose a font hierarchy that communicates hierarchy without requiring decorative dividers.
-- **Controlled Palette**: Use neutral backgrounds (like deep dark #09090b) with a single vibrant accent color to guide user attention.
-- **Purposeful Motion**: Micro-animations should confirm actions, not distract from reading.`,
-    category: "Design & UX",
+Key principles of effective functional UI:
+- Visual hierarchy driven by weight and scale rather than decorative containers
+- Micro-interactions that provide clear feedback without interrupting flow
+- Accessible contrast ratios that perform flawlessly across light and dark modes`,
+    category: "Design System",
     author: "Marcus Chen",
-    authorHandle: "@mchen_design",
+    authorHandle: "@marcus_design",
     authorAvatar: "MC",
     publishedAt: "4 hours ago",
     readTime: "4 min read",
     claps: 890,
     commentsCount: 22,
-    isFeatured: false,
-    isBookmarked: false,
     isLiked: false,
+    isBookmarked: false,
+    isFeatured: false,
   },
   {
-    id: 3,
+    id: "3",
     title: "Navigating the Next Cycle of Global Tech Markets",
     excerpt:
       "An in-depth analysis of capital flows, venture fund deployments, and why vertical software SaaS is experiencing a quiet revival.",
-    content: `The tech funding market has settled into a new equilibrium. Venture capital is no longer chasing vanity growth metrics; instead, sustainable unit economics and proven profitability are leading every investment Memo.
+    content: `After two years of market recalibration, tech investments have found a durable new baseline. Investors are no longer funding growth at all costs; instead, operational durability and net revenue retention have become the primary metrics of business health.
 
-### Key Takeaways for Founders
-- Capital efficiency is now the primary metric of company health.
-- Niche, domain-specific AI workflows are outperforming broad multi-purpose tools.
-- Retention metrics matter far more than top-of-funnel user acquisition.`,
-    category: "Finance & Markets",
+Vertical software platforms—custom-built for specific industries like healthcare, logistics, and energy—are capturing the highest valuations. By embedding payments, AI workflows, and compliance tooling directly into workflow software, these platforms create deep defensibility.`,
+    category: "Market Pulse",
     author: "Sarah Jenkins",
-    authorHandle: "@s_jenkins_vc",
+    authorHandle: "@sarah_vc",
     authorAvatar: "SJ",
     publishedAt: "6 hours ago",
     readTime: "8 min read",
     claps: 2310,
-    commentsCount: 54,
+    commentsCount: 94,
+    isLiked: true,
+    isBookmarked: true,
     isFeatured: false,
-    isBookmarked: false,
-    isLiked: false,
   },
   {
-    id: 4,
-    title: "The Art of Writing Deep-Dive Technical Newsletters",
+    id: "4",
+    title: "Building Resilient AI Agents with Deterministic Safeguards",
     excerpt:
-      "Lessons from growing a tech publication to 100,000 paid subscribers without ad spending or clickbait headlines.",
-    content: `Great writing creates its own distribution network. When you provide genuine value in every single issue, your readers become your primary marketing engine.
+      "Large language models are non-deterministic by nature. Here is how production engineering teams wrap probabilistic outputs in reliable state machines.",
+    content: `Autonomous AI agents hold immense promise for automating complex multi-step workflows. However, deploying them to production environments requires strict safety boundaries.
 
-### Building Trust Through Consistency
-The most successful newsletter authors focus on long-form, thoroughly researched essays rather than shallow daily recaps. Depth creates authority, authority creates trust, and trust converts readers into paying subscribers.`,
-    category: "Publishing",
-    author: "David Vance",
-    authorHandle: "@vance_notes",
+Without deterministic guardrails, agentic loops can hallucinate API calls or get stuck in infinite retries. In this article, we break down the architecture of stateful agent supervision:
+- Schema validation at every tool call boundary
+- Human-in-the-loop approval triggers for high-consequence actions
+- Reversible execution logs with full step rollback capabilities`,
+    category: "AI & Data",
+    author: "Devon Vance",
+    authorHandle: "@devon_ai",
     authorAvatar: "DV",
-    publishedAt: "10 hours ago",
+    publishedAt: "12 hours ago",
     readTime: "5 min read",
-    claps: 640,
-    commentsCount: 17,
-    isFeatured: false,
-    isBookmarked: false,
+    claps: 1750,
+    commentsCount: 45,
     isLiked: false,
+    isBookmarked: false,
+    isFeatured: false,
   },
   {
-    id: 5,
-    title: "AI Agents and the Transformation of Knowledge Work",
+    id: "5",
+    title: "The Developer's Guide to High-Performance CSS & Rendering Engines",
     excerpt:
-      "Autonomous code agents are redefining productivity. Here is how leading engineering organizations are adapting their workflows.",
-    content: `We are witnessing a shift from developer assistant tools to autonomous software agents that execute multi-step objectives independently.
+      "Understanding browser compositing layers, sub-pixel grid alignment, and CSS containment for 60fps animations.",
+    content: `Smooth 60fps animations elevate a good web app into a great user experience. But achieving consistent frame rates across low-end mobile devices and high-refresh desktop displays requires a deep understanding of browser rendering pipelines.
 
-### The New Developer Workflow
-Rather than writing every line manually, developers are transitioning into system architects and code reviewers. The core skills of 2026 are precise problem definition, prompt architecture, and rigorous automated testing.`,
-    category: "AI & Future",
-    author: "Dr. Aris Thorne",
-    authorHandle: "@athorne_ai",
-    authorAvatar: "AT",
+Learn how to leverage transform3d, opacity shifts, and layout containment flags to avoid triggering expensive layout recalculations during active user scroll.`,
+    category: "Frontend",
+    author: "Elena Rostova",
+    authorHandle: "@elena_tech",
+    authorAvatar: "ER",
     publishedAt: "1 day ago",
     readTime: "7 min read",
-    claps: 3100,
-    commentsCount: 89,
-    isFeatured: false,
-    isBookmarked: false,
+    claps: 1120,
+    commentsCount: 19,
     isLiked: false,
+    isBookmarked: false,
+    isFeatured: false,
   },
 ];
 
 const CATEGORIES = [
   "For You",
-  "Following",
-  "Technology",
-  "Design & UX",
-  "Finance & Markets",
-  "AI & Future",
-  "Publishing",
+  "Architecture",
+  "Design System",
+  "Market Pulse",
+  "AI & Data",
+  "Frontend",
 ];
 
-const TOPIC_TAGS = [
-  "#ArtificialIntelligence",
-  "#WebArchitecture",
-  "#FinTech",
-  "#DesignSystems",
-  "#Productivity",
-  "#Startups",
-  "#ReactJS",
-];
-
-const TOP_WRITERS = [
-  { name: "Elena Rostova", handle: "@elena_tech", avatar: "ER", followers: "42.5k" },
-  { name: "Marcus Chen", handle: "@mchen_design", avatar: "MC", followers: "28.1k" },
-  { name: "Sarah Jenkins", handle: "@s_jenkins_vc", avatar: "SJ", followers: "56.9k" },
-];
-
-import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
-
-export function NewsHome({ userEmail = "alex@company.io", onSignOut }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+export function NewsHome({
+  userEmail = "admin@company.io",
+  onSignOut,
+  hideSidebar = false,
+  isDarkMode: controlledIsDarkMode,
+}) {
   const [articles, setArticles] = useState(INITIAL_ARTICLES);
   const [selectedCategory, setSelectedCategory] = useState("For You");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedArticle, setSelectedArticle] = useState(null); // Active article modal/drawer
+  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [internalIsDarkMode, setInternalIsDarkMode] = useState(false);
+  const isDarkMode =
+    controlledIsDarkMode !== undefined ? controlledIsDarkMode : internalIsDarkMode;
+  const setIsDarkMode = (val) =>
+    setInternalIsDarkMode(typeof val === "function" ? val(isDarkMode) : val);
   const [followedWriters, setFollowedWriters] = useState({});
-  const [emailSubscribed, setEmailSubscribed] = useState(false);
-  const [newsletterInput, setNewsletterInput] = useState("");
 
-  // Like article handler
+  // Clap / Like handler
   const toggleLike = (id, e) => {
     if (e) e.stopPropagation();
     setArticles((prev) =>
-      prev.map((art) => {
-        if (art.id === id) {
-          const newIsLiked = !art.isLiked;
-          return {
-            ...art,
-            isLiked: newIsLiked,
-            claps: newIsLiked ? art.claps + 1 : art.claps - 1,
-          };
-        }
-        return art;
-      })
+      prev.map((art) =>
+        art.id === id
+          ? {
+              ...art,
+              claps: art.isLiked ? art.claps - 1 : art.claps + 1,
+              isLiked: !art.isLiked,
+            }
+          : art
+      )
     );
     if (selectedArticle && selectedArticle.id === id) {
       setSelectedArticle((prev) => ({
         ...prev,
+        claps: prev.isLiked ? prev.claps - 1 : prev.claps + 1,
         isLiked: !prev.isLiked,
-        claps: !prev.isLiked ? prev.claps + 1 : prev.claps - 1,
       }));
     }
   };
 
-  // Bookmark article handler
+  // Bookmark handler
   const toggleBookmark = (id, e) => {
     if (e) e.stopPropagation();
     setArticles((prev) =>
@@ -225,7 +202,8 @@ export function NewsHome({ userEmail = "alex@company.io", onSignOut }) {
   };
 
   // Follow writer handler
-  const toggleFollow = (handle) => {
+  const toggleFollow = (handle, e) => {
+    if (e) e.stopPropagation();
     setFollowedWriters((prev) => ({
       ...prev,
       [handle]: !prev[handle],
@@ -247,164 +225,155 @@ export function NewsHome({ userEmail = "alex@company.io", onSignOut }) {
     return matchesCategory && matchesSearch;
   });
 
-  const featuredArticle = articles.find((art) => art.isFeatured) || articles[0];
-
   return (
     <div
-      className={`min-h-screen w-full font-sans transition-colors duration-300 ${
+      className={`min-h-screen w-full font-sans transition-colors duration-300 flex flex-col md:flex-row ${
         isDarkMode
-          ? "bg-[#222831] text-[#eeeeee] selection:bg-[#2FA084] selection:text-white"
-          : "bg-[#eeeeee] text-[#222831] selection:bg-[#2FA084] selection:text-white"
+          ? "bg-[#09090b] text-zinc-100 selection:bg-emerald-500 selection:text-white"
+          : "bg-[#f8fafc] text-slate-900 selection:bg-emerald-500 selection:text-white"
       }`}
     >
-      {/* 1. Header Navigation */}
-      <header
-        className={`sticky top-0 z-40 w-full border-b transition-colors duration-300 backdrop-blur-md ${
-          isDarkMode
-            ? "border-[#393e46] bg-[#222831]/95 text-[#eeeeee]"
-            : "border-[#393e46]/20 bg-white/95 text-[#222831] shadow-xs"
-        }`}
-      >
-        <div className="container mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-          {/* Logo & Search */}
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 cursor-pointer">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl font-extrabold text-lg shadow-md bg-[#2FA084] text-white">
-                N
+      {/* 1. Optional Standalone Left Sidebar (Only rendered if hideSidebar is false) */}
+      {!hideSidebar && (
+        <aside
+          className={`w-full md:w-64 md:h-screen md:fixed md:top-0 md:left-0 shrink-0 border-r flex flex-col justify-between p-4 z-40 transition-colors duration-300 ${
+            isDarkMode
+              ? "border-zinc-800/80 bg-[#09090b] text-zinc-300"
+              : "border-slate-200/80 bg-white text-slate-700 shadow-xs"
+          }`}
+        >
+          <div className="space-y-6">
+            <div className="flex items-center justify-between md:justify-start gap-3 cursor-pointer py-1">
+              <div className="flex items-center gap-2">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl font-extrabold text-lg shadow-sm bg-emerald-500 text-white">
+                  H
+                </div>
+                <span
+                  className={`text-xl font-bold tracking-tight ${
+                    isDarkMode ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  HeroUI Labs
+                </span>
               </div>
-              <span
-                className={`text-xl font-black tracking-wider uppercase select-none ${
-                  isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                }`}
-              >
-                OVERSTACK
-              </span>
+
+              <div className="md:hidden">
+                <AnimatedThemeToggler
+                  theme={isDarkMode ? "dark" : "light"}
+                  onThemeChange={(newTheme) => setIsDarkMode(newTheme === "dark")}
+                  duration={450}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 dark:border-zinc-800"
+                />
+              </div>
             </div>
 
-            {/* Search Input */}
-            <div className="relative hidden md:block w-64 lg:w-80">
+            <div className="relative w-full">
               <FaSearch
                 className={`absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 ${
-                  isDarkMode ? "text-[#eeeeee]/60" : "text-[#393e46]/60"
+                  isDarkMode ? "text-zinc-500" : "text-slate-400"
                 }`}
               />
               <input
                 type="text"
-                placeholder="Search articles, topics, authors..."
+                placeholder="Search articles..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full rounded-full border py-2 pl-9 pr-4 text-xs transition-all focus:border-[#2FA084] focus:outline-none focus:ring-1 focus:ring-[#2FA084]/50 ${
+                className={`w-full rounded-xl border py-2 pl-9 pr-4 text-xs transition-all focus:outline-none focus:border-emerald-500 ${
                   isDarkMode
-                    ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] placeholder-[#eeeeee]/60"
-                    : "bg-[#eeeeee] border-[#393e46]/20 text-[#222831] placeholder-[#393e46]/60"
+                    ? "bg-zinc-900/90 border-zinc-800 text-zinc-100 placeholder-zinc-500"
+                    : "bg-slate-100/70 border-slate-200 text-slate-800 placeholder-slate-400"
                 }`}
               />
             </div>
-          </div>
-
-          {/* Right Section Actions */}
-          <div className="flex items-center gap-3">
-            {/* Animated Magic UI Theme Toggler */}
-            <AnimatedThemeToggler
-              theme={isDarkMode ? "dark" : "light"}
-              onThemeChange={(newTheme) => setIsDarkMode(newTheme === "dark")}
-              duration={450}
-              className={`flex h-9 w-9 items-center justify-center rounded-full border transition-all cursor-pointer ${
-                isDarkMode
-                  ? "bg-[#393e46] border-[#393e46] text-[#2FA084] hover:bg-[#393e46]/80"
-                  : "bg-[#eeeeee] border-[#393e46]/20 text-[#2FA084] hover:bg-[#eeeeee]/80"
-              }`}
-            />
 
             <button
               type="button"
               onClick={() => alert("Editor coming soon!")}
-              className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold text-white bg-[#2FA084] hover:bg-[#268068] shadow-md transition-all active:scale-95 cursor-pointer"
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-all active:scale-98 cursor-pointer"
             >
-              <FaPen className="h-3 w-3" />
-              <span className="hidden sm:inline">Write Story</span>
+              <FaPen className="h-3.5 w-3.5" />
+              <span>Write Story</span>
             </button>
 
-            <button
-              type="button"
-              className={`relative flex h-9 w-9 items-center justify-center rounded-full border transition-colors cursor-pointer ${
-                isDarkMode
-                  ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] hover:text-[#2FA084]"
-                  : "bg-[#eeeeee] border-[#393e46]/20 text-[#393e46] hover:text-[#2FA084]"
-              }`}
-              title="Notifications"
-            >
-              <FaBell className="h-3.5 w-3.5" />
-              <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#2FA084]" />
-            </button>
-
-            {/* User Profile Pill */}
-            <div
-              className={`flex items-center gap-3 pl-2 border-l ${
-                isDarkMode ? "border-[#393e46]" : "border-[#393e46]/20"
-              }`}
-            >
-              <div
-                className={`flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold ${
-                  isDarkMode
-                    ? "bg-[#393e46] border-[#393e46] text-[#2FA084]"
-                    : "bg-[#eeeeee] border-[#393e46]/20 text-[#2FA084]"
+            <div className="space-y-1 pt-2">
+              <p
+                className={`text-[11px] font-bold uppercase tracking-wider px-3 pb-1 ${
+                  isDarkMode ? "text-zinc-500" : "text-slate-400"
                 }`}
               >
-                {userEmail.substring(0, 2).toUpperCase()}
+                Categories
+              </p>
+              <div className="flex flex-row md:flex-col gap-1 overflow-x-auto md:overflow-visible scrollbar-none pb-2 md:pb-0">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`w-full text-left rounded-xl px-3.5 py-2 text-xs font-semibold transition-all cursor-pointer ${
+                      selectedCategory === cat
+                        ? "bg-emerald-500 text-white font-bold shadow-xs"
+                        : isDarkMode
+                        ? "text-zinc-400 hover:text-white hover:bg-zinc-900"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
               </div>
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-slate-200/60 dark:border-zinc-800/60 space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs font-bold ${
+                    isDarkMode
+                      ? "bg-zinc-800 border-zinc-700 text-emerald-400"
+                      : "bg-slate-100 border-slate-200 text-emerald-600"
+                  }`}
+                >
+                  {userEmail.substring(0, 2).toUpperCase()}
+                </div>
+                <span
+                  className={`text-xs font-bold truncate max-w-[100px] ${
+                    isDarkMode ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {userEmail.split("@")[0]}
+                </span>
+              </div>
+
               <button
                 type="button"
                 onClick={onSignOut}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                className={`inline-flex items-center gap-1 rounded-xl border p-2 text-xs font-semibold transition-colors cursor-pointer ${
                   isDarkMode
-                    ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] hover:bg-[#2FA084] hover:text-white"
-                    : "bg-[#eeeeee] border-[#393e46]/20 text-[#393e46] hover:bg-[#2FA084] hover:text-white"
+                    ? "bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-red-500/20 hover:text-red-400"
+                    : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-red-50 hover:text-red-600"
                 }`}
                 title="Sign Out"
               >
-                <FaSignOutAlt className="h-3 w-3" />
-                <span className="hidden sm:inline">Sign out</span>
+                <FaSignOutAlt className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
-        </div>
+        </aside>
+      )}
 
-        {/* Categories Bar */}
-        <div
-          className={`border-t ${
-            isDarkMode ? "border-[#393e46] bg-[#222831]/80" : "border-[#393e46]/20 bg-[#eeeeee]/80"
-          }`}
-        >
-          <div className="container mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto px-4 py-2 sm:px-6 scrollbar-none">
-            {CATEGORIES.map((cat) => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
-                  selectedCategory === cat
-                    ? "bg-[#2FA084] text-white font-bold shadow-md"
-                    : isDarkMode
-                    ? "bg-[#393e46] text-[#eeeeee] hover:bg-[#2FA084]/20 border border-[#393e46]"
-                    : "bg-white text-[#393e46] hover:bg-[#2FA084]/10 border border-[#393e46]/20"
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </header>
-
-      {/* Main Container */}
-      <main className="container mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {/* Main Content Area */}
+      <main
+        className={`flex-1 ${
+          hideSidebar ? "" : "md:ml-64"
+        } px-4 py-6 sm:px-8 max-w-5xl mx-auto w-full`}
+      >
         {/* Mobile Search Bar */}
         <div className="mb-6 md:hidden">
           <div className="relative w-full">
             <FaSearch
               className={`absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 ${
-                isDarkMode ? "text-zinc-400" : "text-slate-400"
+                isDarkMode ? "text-zinc-500" : "text-slate-400"
               }`}
             />
             <input
@@ -412,541 +381,194 @@ export function NewsHome({ userEmail = "alex@company.io", onSignOut }) {
               placeholder="Search articles..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full rounded-full border py-2.5 pl-9 pr-4 text-xs focus:border-black focus:outline-none ${
+              className={`w-full rounded-xl border py-2.5 pl-9 pr-4 text-xs focus:border-emerald-500 focus:outline-none ${
                 isDarkMode
-                  ? "bg-zinc-900 border-zinc-800 text-white placeholder-zinc-500"
-                  : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 shadow-sm"
+                  ? "bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500"
+                  : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 shadow-xs"
               }`}
             />
           </div>
         </div>
 
-        {/* Hero Featured Article (Text-focused Substack style) */}
-        {!searchQuery && selectedCategory === "For You" && featuredArticle && (
-          <section
-            onClick={() => setSelectedArticle(featuredArticle)}
-            className={`mb-10 group relative w-full overflow-hidden rounded-3xl border p-6 md:p-10 transition-all duration-300 cursor-pointer ${
-              isDarkMode
-                ? "bg-[#393e46] border-[#393e46] hover:border-[#2FA084] shadow-2xl"
-                : "bg-white border-[#393e46]/20 hover:border-[#2FA084] shadow-lg"
-            }`}
-          >
-            <div className="absolute top-0 right-0 p-6 pointer-events-none opacity-20 group-hover:opacity-40 transition-opacity">
-              <FaFire className="h-24 w-24 text-[#2FA084]" />
-            </div>
+        {/* HeroUI Prompt Bar */}
+        {!searchQuery && selectedCategory === "For You" && (
+          <section className="mb-8 w-full flex justify-center">
+            <PromptBar
+              onSend={(prompt, mode) => alert(`Submitted prompt (${mode}): ${prompt}`)}
+            />
+          </section>
+        )}
 
-            <div className="relative z-10 max-w-3xl space-y-4">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex items-center rounded-full px-3 py-1 text-xs font-bold border uppercase tracking-wider bg-[#2FA084]/20 text-[#2FA084] border-[#2FA084]/40">
-                  Featured Story
-                </span>
-                <span
-                  className={`text-xs flex items-center gap-1 ${
-                    isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]/70"
-                  }`}
-                >
-                  <FaClock className="h-3 w-3" /> {featuredArticle.readTime}
-                </span>
-              </div>
+        {/* Article Feed Section */}
+        <div className="w-full space-y-4">
+          <div className="pb-2 flex items-center justify-between">
+            <h2
+              className={`text-lg font-bold tracking-tight ${
+                isDarkMode ? "text-white" : "text-slate-900"
+              }`}
+            >
+              {selectedCategory} Articles ({filteredArticles.length})
+            </h2>
+          </div>
 
-              <h1
-                className={`text-3xl font-extrabold tracking-tight md:text-5xl lg:text-6xl transition-colors leading-tight ${
-                  isDarkMode
-                    ? "text-[#eeeeee]"
-                    : "text-[#222831]"
-                }`}
-              >
-                {featuredArticle.title}
-              </h1>
-
-              <p
-                className={`text-base md:text-xl leading-relaxed line-clamp-3 ${
-                  isDarkMode ? "text-[#eeeeee]/90" : "text-[#393e46]"
-                }`}
-              >
-                {featuredArticle.excerpt}
+          {filteredArticles.length === 0 ? (
+            <div
+              className={`rounded-3xl border p-12 text-center ${
+                isDarkMode
+                  ? "bg-[#18181b] border-zinc-800/80 text-zinc-400"
+                  : "bg-white border-slate-200/80 text-slate-500 shadow-xs"
+              }`}
+            >
+              <p className="text-sm font-medium">
+                No articles found matching your criteria.
               </p>
-
-              <div
-                className={`flex flex-wrap items-center justify-between gap-4 pt-4 border-t ${
-                  isDarkMode ? "border-[#222831]" : "border-[#393e46]/10"
+            </div>
+          ) : (
+            filteredArticles.map((art) => (
+              <article
+                key={art.id}
+                onClick={() => setSelectedArticle(art)}
+                className={`group rounded-3xl border p-6 transition-all duration-200 cursor-pointer space-y-3.5 ${
+                  isDarkMode
+                    ? "bg-[#18181b] border-zinc-800/80 hover:border-zinc-700 text-zinc-200 shadow-md hover:shadow-xl"
+                    : "bg-white border-slate-200/80 hover:border-slate-300 text-slate-800 shadow-xs hover:shadow-md"
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full border text-sm font-bold ${
-                      isDarkMode
-                        ? "bg-[#222831] border-[#222831] text-[#2FA084]"
-                        : "bg-[#eeeeee] border-[#393e46]/20 text-[#2FA084]"
-                    }`}
-                  >
-                    {featuredArticle.authorAvatar}
-                  </div>
-                  <div>
-                    <div
-                      className={`flex items-center gap-1 text-sm font-bold ${
-                        isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                      }`}
-                    >
-                      <span>{featuredArticle.author}</span>
-                      <MdVerified className="h-4 w-4 text-[#2FA084]" />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 text-xs">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                      {art.authorAvatar}
                     </div>
                     <span
-                      className={`text-xs ${
-                        isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]/70"
+                      className={`font-semibold ${
+                        isDarkMode ? "text-zinc-200" : "text-slate-800"
                       }`}
                     >
-                      {featuredArticle.authorHandle} • {featuredArticle.publishedAt}
+                      {art.author}
+                    </span>
+                    <span className={isDarkMode ? "text-zinc-600" : "text-slate-300"}>
+                      •
+                    </span>
+                    <span className={isDarkMode ? "text-zinc-400" : "text-slate-500"}>
+                      {art.publishedAt}
                     </span>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <button
-                    type="button"
-                    onClick={(e) => toggleLike(featuredArticle.id, e)}
-                    className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${
-                      isDarkMode ? "text-[#eeeeee]/70 hover:text-[#2FA084]" : "text-[#393e46]/70 hover:text-[#2FA084]"
-                    }`}
-                  >
-                    {featuredArticle.isLiked ? (
-                      <FaHeart className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <FaRegHeart className="h-4 w-4" />
-                    )}
-                    <span>{featuredArticle.claps}</span>
-                  </button>
 
                   <button
                     type="button"
-                    onClick={(e) => toggleBookmark(featuredArticle.id, e)}
-                    className={`transition-colors ${
-                      isDarkMode ? "text-[#eeeeee]/70 hover:text-[#2FA084]" : "text-[#393e46]/70 hover:text-[#2FA084]"
+                    onClick={(e) => toggleBookmark(art.id, e)}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                      art.isBookmarked
+                        ? "text-emerald-500"
+                        : isDarkMode
+                        ? "text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800"
+                        : "text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                     }`}
+                    title={art.isBookmarked ? "Remove bookmark" : "Bookmark article"}
                   >
-                    {featuredArticle.isBookmarked ? (
-                      <FaBookmark className="h-4 w-4 text-[#2FA084]" />
+                    {art.isBookmarked ? (
+                      <FaBookmark className="h-4 w-4 text-emerald-500" />
                     ) : (
                       <FaRegBookmark className="h-4 w-4" />
                     )}
                   </button>
                 </div>
-              </div>
-            </div>
-          </section>
-        )}
 
-        {/* Content Layout: 2 Columns */}
-        <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
-          {/* Left Main Feed */}
-          <div className="lg:col-span-8 space-y-6">
-            <div
-              className={`flex items-center justify-between pb-2 border-b ${
-                isDarkMode ? "border-zinc-800" : "border-slate-200"
-              }`}
-            >
-              <h2
-                className={`text-lg font-bold tracking-wide ${
-                  isDarkMode ? "text-white" : "text-slate-900"
-                }`}
-              >
-                {selectedCategory} Articles ({filteredArticles.length})
-              </h2>
-            </div>
-
-            {filteredArticles.length === 0 ? (
-              <div
-                className={`rounded-2xl border p-12 text-center ${
-                  isDarkMode ? "bg-zinc-950 border-zinc-800" : "bg-white border-slate-200 shadow-sm"
-                }`}
-              >
-                <p className={isDarkMode ? "text-zinc-400 text-base" : "text-slate-500 text-base"}>
-                  No articles found matching your criteria.
-                </p>
-              </div>
-            ) : (
-              filteredArticles.map((art) => (
-                <article
-                  key={art.id}
-                  onClick={() => setSelectedArticle(art)}
-                  className={`group rounded-2xl border p-6 transition-all duration-200 cursor-pointer space-y-3 ${
-                    isDarkMode
-                      ? "bg-[#393e46] border-[#393e46] hover:border-[#2FA084] shadow-md hover:shadow-xl"
-                      : "bg-white border-[#393e46]/20 shadow-md hover:shadow-xl hover:border-[#2FA084]"
+                <h3
+                  className={`text-xl md:text-2xl font-bold transition-colors group-hover:text-emerald-500 leading-snug tracking-tight ${
+                    isDarkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div
-                      className={`flex items-center gap-2 text-xs ${
-                        isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]/70"
-                      }`}
-                    >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold bg-[#2FA084] text-white">
-                        {art.authorAvatar}
-                      </div>
-                      <span
-                        className={`font-semibold ${
-                          isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                        }`}
-                      >
-                        {art.author}
-                      </span>
-                      <span>•</span>
-                      <span>{art.publishedAt}</span>
-                    </div>
+                  {art.title}
+                </h3>
 
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold border ${
-                        isDarkMode
-                          ? "bg-[#222831] text-[#2FA084] border-[#222831]"
-                          : "bg-[#eeeeee] text-[#2FA084] border-[#393e46]/20"
-                      }`}
-                    >
-                      {art.category}
+                <p
+                  className={`text-sm leading-relaxed line-clamp-2 font-normal ${
+                    isDarkMode ? "text-zinc-400" : "text-slate-600"
+                  }`}
+                >
+                  {art.excerpt}
+                </p>
+
+                <div
+                  className={`flex items-center justify-between pt-3 text-xs border-t ${
+                    isDarkMode
+                      ? "text-zinc-400 border-zinc-800/60"
+                      : "text-slate-500 border-slate-100"
+                  }`}
+                >
+                  <div className="flex items-center gap-5">
+                    <span className="flex items-center gap-1.5">
+                      <FaClock className="h-3.5 w-3.5 text-zinc-400" /> {art.readTime}
                     </span>
-                  </div>
-
-                  <h3
-                    className={`text-xl md:text-2xl font-bold transition-colors group-hover:text-[#2FA084] leading-snug ${
-                      isDarkMode
-                        ? "text-[#eeeeee]"
-                        : "text-[#222831]"
-                    }`}
-                  >
-                    {art.title}
-                  </h3>
-
-                  <p
-                    className={`text-sm leading-relaxed line-clamp-2 font-normal ${
-                      isDarkMode ? "text-[#eeeeee]/80" : "text-[#393e46]"
-                    }`}
-                  >
-                    {art.excerpt}
-                  </p>
-
-                  <div
-                    className={`flex items-center justify-between pt-2 text-xs border-t ${
-                      isDarkMode
-                        ? "text-[#eeeeee]/70 border-[#222831]"
-                        : "text-[#393e46]/70 border-[#393e46]/10"
-                    }`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-1">
-                        <FaClock className="h-3 w-3" /> {art.readTime}
-                      </span>
-
-                      <button
-                        type="button"
-                        onClick={(e) => toggleLike(art.id, e)}
-                        className="flex items-center gap-1 hover:text-red-500 transition-colors"
-                      >
-                        {art.isLiked ? (
-                          <FaHeart className="h-3.5 w-3.5 text-red-500" />
-                        ) : (
-                          <FaRegHeart className="h-3.5 w-3.5" />
-                        )}
-                        <span>{art.claps}</span>
-                      </button>
-
-                      <span className="flex items-center gap-1">
-                        <FaRegComment className="h-3.5 w-3.5" />
-                        <span>{art.commentsCount}</span>
-                      </span>
-                    </div>
 
                     <button
                       type="button"
-                      onClick={(e) => toggleBookmark(art.id, e)}
-                      className="transition-colors p-1 hover:text-[#2FA084]"
+                      onClick={(e) => toggleLike(art.id, e)}
+                      className="flex items-center gap-1.5 hover:text-red-500 transition-colors"
                     >
-                      {art.isBookmarked ? (
-                        <FaBookmark className="h-4 w-4 text-[#2FA084]" />
+                      {art.isLiked ? (
+                        <FaHeart className="h-3.5 w-3.5 text-red-500" />
                       ) : (
-                        <FaRegBookmark className="h-4 w-4" />
+                        <FaRegHeart className="h-3.5 w-3.5" />
                       )}
+                      <span>{art.claps}</span>
                     </button>
+
+                    <span className="flex items-center gap-1.5">
+                      <FaRegComment className="h-3.5 w-3.5" />
+                      <span>{art.commentsCount}</span>
+                    </span>
                   </div>
-                </article>
-              ))
-            )}
-          </div>
 
-          {/* Right Sidebar Widgets */}
-          <aside className="lg:col-span-4 space-y-8">
-            {/* Newsletter Subscription Box */}
-            <div
-              className={`rounded-3xl border p-6 shadow-xl space-y-4 ${
-                isDarkMode
-                  ? "bg-[#393e46] border-[#393e46]"
-                  : "bg-white border-[#393e46]/20 shadow-xl"
-              }`}
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl font-bold bg-[#2FA084] text-white">
-                ✉
-              </div>
-              <div>
-                <h3
-                  className={`text-lg font-bold ${
-                    isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                  }`}
-                >
-                  Daily Briefing Newsletter
-                </h3>
-                <p
-                  className={`text-xs mt-1 leading-relaxed ${
-                    isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]"
-                  }`}
-                >
-                  Get curations of top stories and deep tech essays delivered to your inbox every morning.
-                </p>
-              </div>
-
-              {emailSubscribed ? (
-                <div className={`flex items-center gap-2 rounded-xl border p-3 text-xs font-semibold ${
-                  isDarkMode ? "bg-[#2FA084]/20 text-[#2FA084] border-[#2FA084]/40" : "bg-[#2FA084]/10 text-[#2FA084] border-[#2FA084]/30"
-                }`}>
-                  <FaCheck className="h-4 w-4" />
-                  <span>Subscribed! Check your inbox for confirmation.</span>
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-slate-200 dark:border-zinc-800 bg-slate-100 dark:bg-zinc-900 text-slate-600 dark:text-zinc-400">
+                    {art.category}
+                  </span>
                 </div>
-              ) : (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (newsletterInput) setEmailSubscribed(true);
-                  }}
-                  className="space-y-2"
-                >
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={newsletterInput}
-                    onChange={(e) => setNewsletterInput(e.target.value)}
-                    required
-                    className={`w-full rounded-xl border px-3.5 py-2.5 text-xs focus:border-[#2FA084] focus:outline-none ${
-                      isDarkMode
-                        ? "bg-[#222831] border-[#222831] text-[#eeeeee] placeholder-[#eeeeee]/60"
-                        : "bg-[#eeeeee] border-[#393e46]/20 text-[#222831] placeholder-[#393e46]/60"
-                    }`}
-                  />
-                  <button
-                    type="submit"
-                    className="w-full rounded-xl py-2.5 text-xs font-bold transition-all shadow-md cursor-pointer bg-[#2FA084] hover:bg-[#268068] text-white"
-                  >
-                    Subscribe Now
-                  </button>
-                </form>
-              )}
-            </div>
-
-            {/* Top Writers / Publications to Follow */}
-            <div
-              className={`rounded-3xl border p-6 space-y-4 ${
-                isDarkMode ? "bg-[#393e46] border-[#393e46]" : "bg-white border-[#393e46]/20 shadow-md"
-              }`}
-            >
-              <h3
-                className={`text-sm font-bold uppercase tracking-wider ${
-                  isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                }`}
-              >
-                Top Writers & Publications
-              </h3>
-              <div className="space-y-4">
-                {TOP_WRITERS.map((writer) => {
-                  const isFollowing = followedWriters[writer.handle];
-                  return (
-                    <div
-                      key={writer.handle}
-                      className="flex items-center justify-between gap-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full border text-xs font-bold bg-[#2FA084] text-white">
-                          {writer.avatar}
-                        </div>
-                        <div>
-                          <p
-                            className={`text-xs font-bold ${
-                              isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                            }`}
-                          >
-                            {writer.name}
-                          </p>
-                          <p
-                            className={`text-[11px] ${
-                              isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]/70"
-                            }`}
-                          >
-                            {writer.followers} readers
-                          </p>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => toggleFollow(writer.handle)}
-                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                          isFollowing
-                            ? isDarkMode
-                              ? "bg-[#222831] text-[#eeeeee]"
-                              : "bg-[#eeeeee] text-[#222831]"
-                            : "bg-[#2FA084] text-white hover:bg-[#268068]"
-                        }`}
-                      >
-                        {isFollowing ? (
-                          <>
-                            <FaUserCheck className="h-3 w-3" />
-                            <span>Following</span>
-                          </>
-                        ) : (
-                          <>
-                            <FaUserPlus className="h-3 w-3" />
-                            <span>Follow</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Trending Topic Pills */}
-            <div
-              className={`rounded-3xl border p-6 space-y-4 ${
-                isDarkMode ? "bg-zinc-950 border-zinc-800" : "bg-white border-slate-200 shadow-md"
-              }`}
-            >
-              <h3
-                className={`text-sm font-bold uppercase tracking-wider ${
-                  isDarkMode ? "text-white" : "text-slate-900"
-                }`}
-              >
-                Recommended Topics
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {TOPIC_TAGS.map((tag) => (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => setSearchQuery(tag.replace("#", ""))}
-                    className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-                      isDarkMode
-                        ? "bg-zinc-900/80 hover:bg-zinc-800 border-zinc-800 text-zinc-300 hover:text-white"
-                        : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-700 hover:text-slate-900"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </aside>
+              </article>
+            ))
+          )}
         </div>
       </main>
 
-      {/* 5. Article Reader Overlay Modal / Drawer */}
+      {/* Article Detail Modal Dialog */}
       {selectedArticle && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-md animate-in fade-in duration-200">
           <div
-            className={`relative my-8 w-full max-w-3xl rounded-3xl border p-6 sm:p-10 shadow-2xl space-y-6 ${
-              isDarkMode ? "bg-[#222831] border-[#393e46] text-[#eeeeee]" : "bg-white border-[#393e46]/20 text-[#393e46]"
+            className={`relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-6 sm:p-8 shadow-2xl border ${
+              isDarkMode
+                ? "bg-[#18181b] border-zinc-800 text-zinc-100"
+                : "bg-white border-slate-200 text-slate-900"
             }`}
           >
-            {/* Close Button */}
-            <button
-              type="button"
-              onClick={() => setSelectedArticle(null)}
-              className={`absolute top-6 right-6 flex h-9 w-9 items-center justify-center rounded-full border transition-colors cursor-pointer ${
-                isDarkMode
-                  ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] hover:text-[#2FA084]"
-                  : "bg-[#eeeeee] border-[#393e46]/20 text-[#393e46] hover:text-[#2FA084]"
-              }`}
-            >
-              <FaTimes className="h-4 w-4" />
-            </button>
-
-            {/* Category & Read Time */}
-            <div className="flex items-center gap-3">
-              <span className="rounded-full px-3 py-1 text-xs font-bold border uppercase bg-[#2FA084]/20 text-[#2FA084] border-[#2FA084]/40">
-                {selectedArticle.category}
-              </span>
-              <span
-                className={`text-xs flex items-center gap-1 ${
-                  isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]/70"
+            <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-200/60 dark:border-zinc-800/60">
+              <button
+                type="button"
+                onClick={() => setSelectedArticle(null)}
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  isDarkMode
+                    ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-700"
                 }`}
               >
-                <FaClock className="h-3 w-3" /> {selectedArticle.readTime}
-              </span>
-            </div>
+                <FaArrowLeft className="h-3 w-3" />
+                <span>Back to feed</span>
+              </button>
 
-            {/* Title */}
-            <h1
-              className={`text-3xl sm:text-4xl md:text-5xl font-black leading-tight ${
-                isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-              }`}
-            >
-              {selectedArticle.title}
-            </h1>
-
-            {/* Author Meta Bar */}
-            <div
-              className={`flex items-center justify-between border-y py-4 ${
-                isDarkMode ? "border-[#393e46]" : "border-[#393e46]/10"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border text-sm font-bold bg-[#2FA084] text-white">
-                  {selectedArticle.authorAvatar}
-                </div>
-                <div>
-                  <div
-                    className={`flex items-center gap-1 text-sm font-bold ${
-                      isDarkMode ? "text-[#eeeeee]" : "text-[#222831]"
-                    }`}
-                  >
-                    <span>{selectedArticle.author}</span>
-                    <MdVerified className="h-4 w-4 text-[#2FA084]" />
-                  </div>
-                  <span
-                    className={`text-xs ${
-                      isDarkMode ? "text-[#eeeeee]/70" : "text-[#393e46]/70"
-                    }`}
-                  >
-                    {selectedArticle.authorHandle} • {selectedArticle.publishedAt}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => toggleLike(selectedArticle.id)}
-                  className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors ${
-                    isDarkMode
-                      ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] hover:text-red-400"
-                      : "bg-[#eeeeee] border-[#393e46]/20 text-[#393e46] hover:text-red-500"
-                  }`}
-                >
-                  {selectedArticle.isLiked ? (
-                    <FaHeart className="h-4 w-4 text-red-500" />
-                  ) : (
-                    <FaRegHeart className="h-4 w-4" />
-                  )}
-                  <span>{selectedArticle.claps}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => toggleBookmark(selectedArticle.id)}
-                  className={`rounded-full border p-2 transition-colors ${
-                    isDarkMode
-                      ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] hover:text-[#2FA084]"
-                      : "bg-[#eeeeee] border-[#393e46]/20 text-[#393e46] hover:text-[#2FA084]"
+                  onClick={(e) => toggleBookmark(selectedArticle.id, e)}
+                  className={`p-2 rounded-xl border transition-colors ${
+                    selectedArticle.isBookmarked
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                      : isDarkMode
+                      ? "border-zinc-800 text-zinc-400 hover:text-white"
+                      : "border-slate-200 text-slate-600 hover:text-slate-900"
                   }`}
                 >
                   {selectedArticle.isBookmarked ? (
-                    <FaBookmark className="h-4 w-4 text-[#2FA084]" />
+                    <FaBookmark className="h-4 w-4 text-emerald-500" />
                   ) : (
                     <FaRegBookmark className="h-4 w-4" />
                   )}
@@ -954,45 +576,30 @@ export function NewsHome({ userEmail = "alex@company.io", onSignOut }) {
               </div>
             </div>
 
-            {/* Article Content Paragraphs */}
-            <div
-              className={`space-y-4 text-base sm:text-lg leading-relaxed whitespace-pre-line font-normal ${
-                isDarkMode ? "text-[#eeeeee]/90" : "text-[#393e46]"
-              }`}
-            >
-              {selectedArticle.content}
-            </div>
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full font-bold bg-emerald-500 text-white shadow-sm">
+                  {selectedArticle.authorAvatar}
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm">{selectedArticle.author}</h4>
+                  <p
+                    className={`text-xs ${
+                      isDarkMode ? "text-zinc-400" : "text-slate-500"
+                    }`}
+                  >
+                    {selectedArticle.authorHandle} • {selectedArticle.publishedAt}
+                  </p>
+                </div>
+              </div>
 
-            {/* Footer Actions */}
-            <div
-              className={`pt-6 border-t flex items-center justify-between ${
-                isDarkMode ? "border-[#393e46]" : "border-[#393e46]/10"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedArticle(null)}
-                className={`inline-flex items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-bold transition-colors cursor-pointer ${
-                  isDarkMode
-                    ? "bg-[#393e46] border-[#393e46] text-[#eeeeee] hover:text-[#2FA084]"
-                    : "bg-[#eeeeee] border-[#393e46]/20 text-[#393e46] hover:text-[#2FA084]"
-                }`}
-              >
-                <MdArrowBack className="h-4 w-4" />
-                <span>Back to feed</span>
-              </button>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-snug">
+                {selectedArticle.title}
+              </h1>
 
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard?.writeText(window.location.href);
-                  alert("Link copied to clipboard!");
-                }}
-                className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-bold transition-all cursor-pointer bg-[#2FA084] text-white hover:bg-[#268068]"
-              >
-                <FaShareAlt className="h-3.5 w-3.5" />
-                <span>Share Article</span>
-              </button>
+              <div className="py-4 text-sm sm:text-base leading-relaxed whitespace-pre-line font-normal text-slate-700 dark:text-zinc-300">
+                {selectedArticle.content}
+              </div>
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { Badge } from '@/components/base-ui/badge';
 import { ArrowUpRight } from 'lucide-react';
 import Particles from '@/components/ui/Particles';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
+import PromptBar from '@/components/ui/prompt-bar';
 
 export const Newsletter3 = ({
   badgeText = 'Get Started',
@@ -65,8 +66,10 @@ export const Newsletter3 = ({
           {description}
         </p>
 
-        <div className="mx-auto flex w-full max-w-lg flex-col items-center gap-4">
-          <a href={ctaHref} onClick={onCtaClick} className="no-underline">
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6">
+          <PromptBar onSend={(prompt, mode) => alert(`Sending prompt (${mode}): ${prompt}`)} />
+
+          <a href={ctaHref} onClick={onCtaClick} className="no-underline mt-2">
             <ShimmerButton
               shimmerColor="#ffffff"
               shimmerSize="0.18em"
@@ -84,7 +87,7 @@ export const Newsletter3 = ({
           </a>
 
           {subtext && (
-            <p className={`text-sm md:text-base font-medium mt-2 ${
+            <p className={`text-sm md:text-base font-medium mt-1 ${
               isDarkMode ? 'text-zinc-400' : 'text-slate-500'
             }`}>
               {subtext}
