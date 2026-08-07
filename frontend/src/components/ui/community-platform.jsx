@@ -967,10 +967,10 @@ export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) 
                     <article
                       key={art.id}
                       onClick={() => setSelectedArticle(art)}
-                      className={`group rounded-3xl border p-5 flex flex-col justify-between transition-all duration-300 cursor-pointer space-y-4 shadow-sm hover:shadow-xl ${
+                      className={`rounded-3xl border p-5 flex flex-col justify-between cursor-pointer space-y-4 shadow-sm ${
                         isDarkMode
-                          ? "bg-[#18181B] border-[#3F3F46] hover:border-[#818CF8]/50"
-                          : "bg-white border-[#E4E4E7] hover:border-[#4F46E5]/40"
+                          ? "bg-[#18181B] border-[#3F3F46]"
+                          : "bg-white border-[#E4E4E7]"
                       }`}
                     >
                       <div className="space-y-3">
@@ -979,11 +979,8 @@ export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) 
                           <img
                             src={art.coverImage}
                             alt={art.title}
-                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="h-full w-full object-cover"
                           />
-                          <span className="absolute top-3 left-3 rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[11px] font-semibold text-white">
-                            {art.category}
-                          </span>
                         </div>
 
                         {/* Author Header */}
@@ -1000,7 +997,7 @@ export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) 
                         </div>
 
                         {/* Article Title */}
-                        <h3 className="text-xl font-bold leading-snug group-hover:text-[#4F46E5] dark:group-hover:text-[#818CF8] transition-colors font-title">
+                        <h3 className="text-xl font-bold leading-snug font-title">
                           {art.title}
                         </h3>
 

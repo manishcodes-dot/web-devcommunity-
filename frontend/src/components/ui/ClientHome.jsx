@@ -5,6 +5,7 @@ import NewsHome from './news-home'
 export function ClientHome({ userEmail, onSignOut }) {
   const [activeSection, setActiveSection] = useState('Home')
   const [isDarkMode, setIsDarkMode] = useState(false) // Light theme default for Client Home & Sidebar
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
 
   return (
     <div className={`flex h-screen w-full overflow-hidden font-sans transition-colors duration-200 ${
@@ -18,6 +19,8 @@ export function ClientHome({ userEmail, onSignOut }) {
         onSelect={(item) => {
           if (item === 'Logout') {
             if (onSignOut) onSignOut()
+          } else if (item === 'CreateArticle') {
+            setIsCreateOpen(true)
           } else {
             setActiveSection(item)
           }
@@ -28,9 +31,16 @@ export function ClientHome({ userEmail, onSignOut }) {
       <div className={`flex-1 h-screen overflow-y-auto transition-colors duration-200 ${
         isDarkMode ? 'bg-[#0c0c0e] text-zinc-100' : 'bg-[#f8fafc] text-slate-900'
       }`}>
-        {activeSection === 'Home' || activeSection === 'Browse' || activeSection === 'Activity' ? (
+        {activeSection === 'Home' || activeSection === 'Explore' || activeSection === 'Bookmarks' ? (
           <div className="h-full">
-            <NewsHome userEmail={userEmail} onSignOut={onSignOut} hideSidebar={true} isDarkMode={isDarkMode} />
+            <NewsHome
+              userEmail={userEmail}
+              onSignOut={onSignOut}
+              hideSidebar={true}
+              isDarkMode={isDarkMode}
+              externalCreateOpen={isCreateOpen}
+              onCloseExternalCreate={() => setIsCreateOpen(false)}
+            />
           </div>
         ) : (
           <div className="p-8 max-w-6xl mx-auto space-y-6">

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import {
   Search,
   Home,
+  Compass,
+  Bookmark,
   Bell,
   Globe,
   Lock,
@@ -135,6 +137,17 @@ export function HeroSidebar({
           )}
         </button>
 
+        {/* Create Article Button */}
+        <button
+          type="button"
+          onClick={() => handleNavClick('CreateArticle')}
+          title="Create Article"
+          className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2.5'} rounded-xl font-bold text-xs text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-all active:scale-95 cursor-pointer`}
+        >
+          <Plus className="w-4 h-4 flex-shrink-0" />
+          {!isCollapsed && <span>Create Article</span>}
+        </button>
+
         {/* Main Nav Items */}
         <nav className="space-y-1">
           {/* Home */}
@@ -155,12 +168,12 @@ export function HeroSidebar({
             {!isCollapsed && <span>Home</span>}
           </button>
 
-          {/* Activity */}
+          {/* Explore */}
           <button
-            onClick={() => handleNavClick('Activity')}
-            title="Activity"
+            onClick={() => handleNavClick('Explore')}
+            title="Explore"
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
-              currentActive === 'Activity'
+              currentActive === 'Explore'
                 ? isDarkMode
                   ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
                   : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
@@ -169,16 +182,16 @@ export function HeroSidebar({
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
             }`}
           >
-            <Bell className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span>Activity</span>}
+            <Compass className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>Explore</span>}
           </button>
 
-          {/* Browse */}
+          {/* Bookmarks */}
           <button
-            onClick={() => handleNavClick('Browse')}
-            title="Browse"
+            onClick={() => handleNavClick('Bookmarks')}
+            title="Bookmarks"
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
-              currentActive === 'Browse'
+              currentActive === 'Bookmarks'
                 ? isDarkMode
                   ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
                   : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
@@ -187,8 +200,8 @@ export function HeroSidebar({
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
             }`}
           >
-            <Globe className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span>Browse</span>}
+            <Bookmark className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>Bookmarks</span>}
           </button>
         </nav>
 

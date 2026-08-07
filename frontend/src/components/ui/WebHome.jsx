@@ -1,6 +1,7 @@
 import React from 'react'
 import Newsletter3 from '@/components/ui/newsletter-3'
 import Features1 from '@/components/ui/feature-1'
+import { PricingSection } from '@/components/ui/pricing'
 import Faq6 from '@/components/ui/faq-6'
 import Footer15 from '@/components/ui/footer-15'
 
@@ -19,6 +20,7 @@ export function WebHome({ onGetStarted, isDarkMode = true }) {
         isDarkMode={isDarkMode}
       />
       <Features1 isDarkMode={isDarkMode} />
+      <PricingSection isDarkMode={isDarkMode} />
       <Faq6 isDarkMode={isDarkMode} />
       <Footer15 isDarkMode={isDarkMode} />
     </main>
