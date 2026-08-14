@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import WebHome from '@/components/ui/WebHome'
-import ClientHome from '@/components/ui/ClientHome'
+import WebHome from '@/components/ui/web-home'
+import ClientHome from '@/components/ui/client-home'
 import Auth1 from '@/components/ui/auth-01'
 import Auth2 from '@/components/ui/auth-02'
 

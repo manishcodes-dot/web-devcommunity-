@@ -110,44 +110,6 @@ export function HeroSidebar({
           </button>
         </div>
 
-        {/* Search Bar */}
-        <button
-          onClick={() => setIsSearchOpen(true)}
-          title="Search (Ctrl+K)"
-          className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2' : 'justify-between px-3 py-2'} rounded-xl transition-colors text-sm border group ${
-            isDarkMode
-              ? 'bg-transparent hover:bg-zinc-900/80 text-zinc-400 hover:text-zinc-200 border-transparent hover:border-zinc-800/50'
-              : 'bg-slate-100/70 hover:bg-slate-200/60 text-slate-500 hover:text-slate-900 border-slate-200/60'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <Search className={`w-4 h-4 flex-shrink-0 transition-colors ${isDarkMode ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-slate-400 group-hover:text-slate-700'}`} />
-            {!isCollapsed && (
-              <span className={`font-medium text-sm ${isDarkMode ? 'text-zinc-300 group-hover:text-white' : 'text-slate-600 group-hover:text-slate-900'}`}>Search</span>
-            )}
-          </div>
-          {!isCollapsed && (
-            <kbd className={`flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono rounded shadow-xs border ${
-              isDarkMode
-                ? 'text-zinc-400 bg-zinc-800/60 border-zinc-700/40'
-                : 'text-slate-500 bg-white border-slate-200'
-            }`}>
-              <span>Ctrl+K</span>
-            </kbd>
-          )}
-        </button>
-
-        {/* Create Article Button */}
-        <button
-          type="button"
-          onClick={() => handleNavClick('CreateArticle')}
-          title="Create Article"
-          className={`w-full flex items-center ${isCollapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2.5'} rounded-xl font-bold text-xs text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-all active:scale-95 cursor-pointer`}
-        >
-          <Plus className="w-4 h-4 flex-shrink-0" />
-          {!isCollapsed && <span>Create Article</span>}
-        </button>
-
         {/* Main Nav Items */}
         <nav className="space-y-1">
           {/* Home */}

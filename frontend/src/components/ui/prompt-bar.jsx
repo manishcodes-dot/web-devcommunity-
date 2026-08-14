@@ -1,20 +1,24 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Plus, ChevronDown, Mic, ArrowUp, Paperclip } from "lucide-react";
 
-export function AttachmentButton({ onAttach }) {
+export function AttachmentButton({ onAttach, isDarkMode = false }) {
   return (
     <button
       type="button"
       onClick={onAttach}
       aria-label="Add attachment"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer ${
+        isDarkMode
+          ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      }`}
     >
       <Plus className="h-5 w-5" />
     </button>
   );
 }
 
-export function PromptTextarea({ value, onChange, onSubmit }) {
+export function PromptTextarea({ value, onChange, onSubmit, isDarkMode = false, placeholder = "How can I help you today?" }) {
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -40,15 +44,19 @@ export function PromptTextarea({ value, onChange, onSubmit }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       onKeyDown={handleKeyDown}
-      placeholder="How can I help you today?"
+      placeholder={placeholder}
       rows={1}
       aria-label="AI Prompt Input"
-      className="w-full resize-none bg-transparent px-2 py-1 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0 border-none max-h-[140px] leading-relaxed font-sans"
+      className={`w-full resize-none bg-transparent px-2 py-1 text-sm sm:text-base focus:outline-none focus:ring-0 border-none max-h-[140px] leading-relaxed font-sans ${
+        isDarkMode
+          ? "text-zinc-100 placeholder:text-zinc-500"
+          : "text-slate-900 placeholder:text-slate-400"
+      }`}
     />
   );
 }
 
-export function ModeSelector({ mode, onSelectMode }) {
+export function ModeSelector({ mode, onSelectMode, isDarkMode = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const options = ["Auto", "GPT-4o", "Claude 3.5", "Perplexity"];
 
@@ -59,14 +67,24 @@ export function ModeSelector({ mode, onSelectMode }) {
         onClick={() => setIsOpen(!isOpen)}
         aria-label="Select AI Mode"
         aria-expanded={isOpen}
-        className="flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className={`flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer ${
+          isDarkMode
+            ? "bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white"
+            : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+        }`}
       >
         <span>{mode}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
       </button>
 
       {isOpen && (
-        <div className="absolute bottom-full right-0 mb-2 w-36 rounded-xl border border-slate-200 bg-white p-1 shadow-lg z-50">
+        <div
+          className={`absolute bottom-full right-0 mb-2 w-36 rounded-xl border p-1 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100 ${
+            isDarkMode
+              ? "bg-[#18181b] border-zinc-800 text-zinc-200"
+              : "bg-white border-slate-200 text-slate-800"
+          }`}
+        >
           {options.map((opt) => (
             <button
               key={opt}
@@ -75,9 +93,13 @@ export function ModeSelector({ mode, onSelectMode }) {
                 onSelectMode(opt);
                 setIsOpen(false);
               }}
-              className={`w-full rounded-lg px-3 py-1.5 text-left text-xs font-medium transition-colors ${
+              className={`w-full rounded-lg px-3 py-1.5 text-left text-xs font-medium transition-colors cursor-pointer ${
                 mode === opt
-                  ? "bg-blue-50 text-blue-600 font-semibold"
+                  ? isDarkMode
+                    ? "bg-emerald-500/20 text-emerald-400 font-semibold"
+                    : "bg-emerald-50 text-emerald-600 font-semibold"
+                  : isDarkMode
+                  ? "text-zinc-300 hover:bg-zinc-800 hover:text-white"
                   : "text-slate-700 hover:bg-slate-100"
               }`}
             >
@@ -90,29 +112,35 @@ export function ModeSelector({ mode, onSelectMode }) {
   );
 }
 
-export function VoiceButton({ onVoiceClick }) {
+export function VoiceButton({ onVoiceClick, isDarkMode = false }) {
   return (
     <button
       type="button"
       onClick={onVoiceClick}
       aria-label="Voice input"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 cursor-pointer ${
+        isDarkMode
+          ? "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+          : "text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+      }`}
     >
       <Mic className="h-4 w-4" />
     </button>
   );
 }
 
-export function SendButton({ isActive, onClick }) {
+export function SendButton({ isActive, onClick, isDarkMode = false }) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={!isActive}
       aria-label="Send prompt"
-      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
         isActive
-          ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md active:scale-95 cursor-pointer"
+          ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md active:scale-95 cursor-pointer"
+          : isDarkMode
+          ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
           : "bg-slate-200 text-slate-400 cursor-not-allowed"
       }`}
     >
@@ -121,7 +149,7 @@ export function SendButton({ isActive, onClick }) {
   );
 }
 
-export function PromptBar({ onSend, className = "" }) {
+export function PromptBar({ onSend, className = "", isDarkMode = false, placeholder }) {
   const [promptText, setPromptText] = useState("");
   const [selectedMode, setSelectedMode] = useState("Auto");
   const [isFocused, setIsFocused] = useState(false);
@@ -141,26 +169,36 @@ export function PromptBar({ onSend, className = "" }) {
           setIsFocused(false);
         }
       }}
-      className={`relative flex w-full max-w-[800px] items-center gap-2 rounded-full border bg-white px-3 py-2 transition-all duration-200 shadow-sm hover:shadow-md ${
-        isFocused
-          ? "border-blue-500 ring-2 ring-blue-500/20 shadow-md"
-          : "border-slate-200 hover:border-slate-300"
+      className={`relative flex w-full max-w-[800px] items-center gap-1.5 sm:gap-2 rounded-full border px-3 py-1.5 sm:py-2 transition-all duration-200 shadow-sm hover:shadow-md ${
+        isDarkMode
+          ? `bg-[#18181b] ${
+              isFocused
+                ? "border-emerald-500 ring-2 ring-emerald-500/20 shadow-md"
+                : "border-zinc-800 hover:border-zinc-700"
+            }`
+          : `bg-white ${
+              isFocused
+                ? "border-emerald-500 ring-2 ring-emerald-500/20 shadow-md"
+                : "border-slate-200 hover:border-slate-300"
+            }`
       } ${className}`}
     >
-      <AttachmentButton onAttach={() => alert("Attachment clicked")} />
+      <AttachmentButton onAttach={() => alert("Attachment clicked")} isDarkMode={isDarkMode} />
       
       <div className="flex-1 min-w-0">
         <PromptTextarea
           value={promptText}
           onChange={setPromptText}
           onSubmit={handleSend}
+          isDarkMode={isDarkMode}
+          placeholder={placeholder}
         />
       </div>
 
-      <div className="flex items-center gap-1.5 shrink-0">
-        <ModeSelector mode={selectedMode} onSelectMode={setSelectedMode} />
-        <VoiceButton onVoiceClick={() => alert("Voice clicked")} />
-        <SendButton isActive={promptText.trim().length > 0} onClick={handleSend} />
+      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+        <ModeSelector mode={selectedMode} onSelectMode={setSelectedMode} isDarkMode={isDarkMode} />
+        <VoiceButton onVoiceClick={() => alert("Voice clicked")} isDarkMode={isDarkMode} />
+        <SendButton isActive={promptText.trim().length > 0} onClick={handleSend} isDarkMode={isDarkMode} />
       </div>
     </div>
   );

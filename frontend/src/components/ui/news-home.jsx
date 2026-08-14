@@ -7,11 +7,9 @@ import {
   FaBookmark,
   FaRegBookmark,
   FaPen,
-  FaShareAlt,
   FaUserPlus,
   FaUserCheck,
   FaSignOutAlt,
-  FaClock,
   FaArrowLeft,
   FaEllipsisH,
   FaUser,
@@ -21,10 +19,14 @@ import {
 
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import PromptBar from "@/components/ui/prompt-bar";
+import AiChatBot from "@/components/ui/ai-chat-bot";
 
+/**
+ * INITIAL_ARTICLES
+ * Sample feed articles dataset with rich text content, categories, author profiles, and metrics.
+ */
 const INITIAL_ARTICLES = [
   {
-    id: "1",
     title: "The Architecture of Modern Web Applications in 2026",
     excerpt:
       "Why monolithic simplicity is returning, how edge compute changes state management, and what we learned after building platforms for millions of concurrent readers.",
@@ -323,34 +325,6 @@ export function NewsHome({
               </div>
             </div>
 
-            <div className="relative w-full">
-              <FaSearch
-                className={`absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 ${
-                  isDarkMode ? "text-zinc-500" : "text-slate-400"
-                }`}
-              />
-              <input
-                type="text"
-                placeholder="Search articles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full rounded-xl border py-2 pl-9 pr-4 text-xs transition-all focus:outline-none focus:border-emerald-500 ${
-                  isDarkMode
-                    ? "bg-zinc-900/90 border-zinc-800 text-zinc-100 placeholder-zinc-500"
-                    : "bg-slate-100/70 border-slate-200 text-slate-800 placeholder-slate-400"
-                }`}
-              />
-            </div>
-
-            <button
-              type="button"
-              onClick={() => alert("Editor coming soon!")}
-              className="w-full inline-flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm transition-all active:scale-98 cursor-pointer"
-            >
-              <FaPen className="h-3.5 w-3.5" />
-              <span>Write Story</span>
-            </button>
-
             <div className="space-y-1 pt-2">
               <p
                 className={`text-[11px] font-bold uppercase tracking-wider px-3 pb-1 ${
@@ -517,36 +491,60 @@ export function NewsHome({
         ) : (
           /* Main Feed View */
           <>
-            {/* Mobile Search Bar */}
-            <div className="mb-6 md:hidden">
-              <div className="relative w-full">
+            {/* Top Bar: Search Bar with Create New Note Button on its Right Side */}
+            <div className="mb-8 flex flex-col sm:flex-row items-center gap-3 w-full">
+              {/* Search Bar Container */}
+              <div className="relative flex-1 w-full">
                 <FaSearch
-                  className={`absolute top-1/2 left-3.5 h-3.5 w-3.5 -translate-y-1/2 ${
+                  className={`absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 ${
                     isDarkMode ? "text-zinc-500" : "text-slate-400"
                   }`}
                 />
                 <input
                   type="text"
-                  placeholder="Search articles..."
+                  placeholder="Search articles, notes, topics..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full rounded-xl border py-2.5 pl-9 pr-4 text-xs focus:border-emerald-500 focus:outline-none ${
+                  className={`w-full rounded-2xl border py-3 pl-10 pr-20 text-xs sm:text-sm font-medium transition-all focus:outline-none focus:border-emerald-500 shadow-xs ${
                     isDarkMode
-                      ? "bg-zinc-900/90 border-zinc-800 text-white placeholder-zinc-500"
-                      : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 shadow-xs"
+                      ? "bg-[#141417] border-zinc-800 text-white placeholder-zinc-500 focus:bg-[#18181b]"
+                      : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:bg-white"
                   }`}
                 />
+                <div className="absolute top-1/2 right-3 -translate-y-1/2 flex items-center gap-1">
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      className={`text-xs p-1 rounded-full ${
+                        isDarkMode ? "text-zinc-400 hover:text-white" : "text-slate-400 hover:text-slate-700"
+                      }`}
+                    >
+                      ✕
+                    </button>
+                  )}
+                  <kbd
+                    className={`hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono rounded-md border ${
+                      isDarkMode
+                        ? "text-zinc-400 bg-zinc-800/80 border-zinc-700/60"
+                        : "text-slate-500 bg-slate-100 border-slate-200"
+                    }`}
+                  >
+                    Ctrl+K
+                  </kbd>
+                </div>
               </div>
-            </div>
 
-            {/* HeroUI Prompt Bar */}
-            {!searchQuery && selectedCategory === "For You" && (
-              <section className="mb-8 w-full flex justify-center">
-                <PromptBar
-                  onSend={(prompt, mode) => alert(`Submitted prompt (${mode}): ${prompt}`)}
-                />
-              </section>
-            )}
+              {/* Create New Note Button on Right Side of Search Bar */}
+              <button
+                type="button"
+                onClick={() => setIsCreateOpen(true)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-xs sm:text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
+              >
+                <FaPen className="h-3.5 w-3.5" />
+                <span>Create New Note</span>
+              </button>
+            </div>
 
             {/* Article Feed Section */}
             <div className="w-full space-y-4">
@@ -939,6 +937,12 @@ export function NewsHome({
           </div>
         </div>
       )}
+
+      {/* Floating AI Chat Bot at the bottom */}
+      <AiChatBot
+        isDarkMode={isDarkMode}
+        onCreateNoteClick={() => setIsCreateOpen(true)}
+      />
     </div>
   );
 }

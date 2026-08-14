@@ -1,7 +1,7 @@
 import React from 'react';
 import { Badge } from '@/components/base-ui/badge';
 import { ArrowUpRight } from 'lucide-react';
-import Particles from '@/components/ui/Particles';
+import Particles from '@/components/ui/particles';
 import { ShimmerButton } from '@/components/ui/shimmer-button';
 import PromptBar from '@/components/ui/prompt-bar';
 
