@@ -27,6 +27,7 @@ export function AiChatBot({ isDarkMode = false, onCreateNoteClick }) {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const chatBotRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,6 +38,18 @@ export function AiChatBot({ isDarkMode = false, onCreateNoteClick }) {
       scrollToBottom();
     }
   }, [messages, isOpen]);
+
+  // Close AI Chatbot when clicking outside
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e) => {
+      if (chatBotRef.current && !chatBotRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
 
   const handleSendPrompt = (promptText, mode) => {
     if (!promptText.trim()) return;
@@ -151,6 +164,7 @@ export function AiChatBot({ isDarkMode = false, onCreateNoteClick }) {
       {/* Pop Up AI Chatbot Interface */}
       {isOpen && (
         <div
+          ref={chatBotRef}
           className={`fixed bottom-6 right-4 sm:right-6 md:right-8 z-50 w-[92vw] max-w-lg rounded-3xl border shadow-2xl overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in zoom-in-95 ${
             isDarkMode
               ? "bg-[#141417]/95 backdrop-blur-xl border-zinc-800 text-zinc-100 shadow-black/60"

@@ -5,10 +5,10 @@ import { PricingSection } from '@/components/ui/pricing'
 import Faq6 from '@/components/ui/faq-6'
 import Footer15 from '@/components/ui/footer-15'
 
-export function WebHome({ onGetStarted, isDarkMode = true }) {
+export function WebHome({ onGetStarted, isDarkMode = false }) {
   return (
     <main className={`min-h-screen w-full transition-colors duration-300 ${
-      isDarkMode ? 'bg-[#09090b] text-white' : 'bg-white text-slate-900'
+      isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
     }`}>
       <Newsletter3 
         badgeText="Get Started"

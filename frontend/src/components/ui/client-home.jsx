@@ -1,26 +1,42 @@
 import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import HeroSidebar from './hero-sidebar'
 import NewsHome from './news-home'
 
-export function ClientHome({ userEmail, onSignOut }) {
+export function ClientHome({
+  userEmail,
+  onSignOut,
+  customNotes = [],
+  isDarkMode: controlledIsDarkMode,
+  onToggleTheme: controlledOnToggleTheme,
+}) {
+  const navigate = useNavigate()
   const [activeSection, setActiveSection] = useState('Home')
-  const [isDarkMode, setIsDarkMode] = useState(false) // Light theme default for Client Home & Sidebar
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [internalIsDarkMode, setInternalIsDarkMode] = useState(false)
+
+  const isDarkMode = controlledIsDarkMode !== undefined ? controlledIsDarkMode : internalIsDarkMode
+  const handleToggleTheme = () => {
+    if (controlledOnToggleTheme) {
+      controlledOnToggleTheme()
+    } else {
+      setInternalIsDarkMode(!internalIsDarkMode)
+    }
+  }
 
   return (
     <div className={`flex h-screen w-full overflow-hidden font-sans transition-colors duration-200 ${
-      isDarkMode ? 'bg-[#09090b] text-zinc-100' : 'bg-slate-50 text-slate-900'
+      isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
     }`}>
-      {/* Hero Sidebar on the Left (Light theme default) */}
+      {/* Hero Sidebar on the Left */}
       <HeroSidebar
         activeItem={activeSection}
         isDarkMode={isDarkMode}
-        onToggleTheme={() => setIsDarkMode(!isDarkMode)}
+        onToggleTheme={handleToggleTheme}
         onSelect={(item) => {
           if (item === 'Logout') {
             if (onSignOut) onSignOut()
-          } else if (item === 'CreateArticle') {
-            setIsCreateOpen(true)
+          } else if (item === 'CreateArticle' || item === 'Add space') {
+            navigate('/create')
           } else {
             setActiveSection(item)
           }
@@ -29,7 +45,7 @@ export function ClientHome({ userEmail, onSignOut }) {
 
       {/* Client Home Workspace on the Right */}
       <div className={`flex-1 h-screen overflow-y-auto transition-colors duration-200 ${
-        isDarkMode ? 'bg-[#0c0c0e] text-zinc-100' : 'bg-[#f8fafc] text-slate-900'
+        isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
       }`}>
         {activeSection === 'Home' || activeSection === 'Explore' || activeSection === 'Bookmarks' ? (
           <div className="h-full">
@@ -38,8 +54,8 @@ export function ClientHome({ userEmail, onSignOut }) {
               onSignOut={onSignOut}
               hideSidebar={true}
               isDarkMode={isDarkMode}
-              externalCreateOpen={isCreateOpen}
-              onCloseExternalCreate={() => setIsCreateOpen(false)}
+              onToggleTheme={handleToggleTheme}
+              customNotes={customNotes}
             />
           </div>
         ) : (

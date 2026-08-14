@@ -1,82 +1,145 @@
-import { useState } from 'react'
-import WebHome from '@/components/ui/web-home'
-import ClientHome from '@/components/ui/client-home'
-import Auth1 from '@/components/ui/auth-01'
-import Auth2 from '@/components/ui/auth-02'
+import { useState } from 'react';
+import { Routes, Route, useNavigate, Navigate } from 'react-router-dom';
+import WebHome from '@/components/ui/web-home';
+import ClientHome from '@/components/ui/client-home';
+import Auth1 from '@/components/ui/auth-01';
+import Auth2 from '@/components/ui/auth-02';
+import CreateNotePage from '@/components/ui/create-note';
 
-function App() {
-  const [currentPage, setCurrentPage] = useState('home') // Default is clean untouched Web Home Page Site
-  const [userEmail, setUserEmail] = useState('junior@heroui.com')
-  const [isDarkMode, setIsDarkMode] = useState(true)
+function LoginPage({ onLoginSuccess, isDarkMode }) {
+  const navigate = useNavigate();
 
-  const handleGetStarted = (e) => {
-    if (e) e.preventDefault()
-    setCurrentPage('signup')
-  }
+  const handleLoginSubmit = (email) => {
+    if (onLoginSuccess) onLoginSuccess(email || 'junior@heroui.com');
+    navigate('/app');
+  };
 
-  const handleLoginSuccess = (email) => {
-    if (email) setUserEmail(email)
-    setCurrentPage('client-home')
-  }
-
-  const handleSignupSuccess = (data) => {
-    if (data?.email) setUserEmail(data.email)
-    setCurrentPage('client-home')
-  }
-
-  // Client Side Home Page (With Hero Sidebar)
-  if (currentPage === 'client-home' || currentPage === 'feed') {
-    return (
-      <ClientHome
-        userEmail={userEmail}
-        onSignOut={() => setCurrentPage('home')}
-      />
-    )
-  }
-
-  // Login Page
-  if (currentPage === 'login') {
-    return (
-      <main className={`min-h-screen w-full transition-colors duration-300 ${
-        isDarkMode ? 'bg-[#09090b] text-[#fafafa]' : 'bg-white text-slate-900'
-      }`}>
-        <Auth1 
-          bottomPromptText="Don't have an account?"
-          bottomPromptLinkText="Create new account"
-          onBottomPromptClick={() => setCurrentPage('signup')}
-          onBackToHome={() => setCurrentPage('home')}
-          onSubmit={(email) => handleLoginSuccess(email)}
-          isDarkMode={isDarkMode}
-        />
-      </main>
-    )
-  }
-
-  // Signup Page
-  if (currentPage === 'signup') {
-    return (
-      <main className={`min-h-screen w-full transition-colors duration-300 ${
-        isDarkMode ? 'bg-[#09090b] text-[#fafafa]' : 'bg-white text-slate-900'
-      }`}>
-        <Auth2 
-          signInPromptText="Already have an account?"
-          signInLinkText="Sign in"
-          onSignInClick={() => setCurrentPage('login')}
-          onBackToHome={() => setCurrentPage('home')}
-          onSubmit={(data) => handleSignupSuccess(data)}
-          isDarkMode={isDarkMode}
-        />
-      </main>
-    )
-  }
-
-  // Web Home Page Site (Clean & Untouched Public Landing Page)
   return (
-    <WebHome
-      onGetStarted={handleGetStarted}
-      isDarkMode={isDarkMode}
-    />
-  )
+    <main className={`min-h-screen w-full transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
+    }`}>
+      <Auth1 
+        bottomPromptText="Don't have an account?"
+        bottomPromptLinkText="Create new account"
+        onBottomPromptClick={() => navigate('/signup')}
+        onBackToHome={() => navigate('/')}
+        onSubmit={(email) => handleLoginSubmit(email)}
+        isDarkMode={isDarkMode}
+      />
+    </main>
+  );
 }
 
-export default App
+function SignupPage({ onSignupSuccess, isDarkMode }) {
+  const navigate = useNavigate();
+
+  const handleSignupSubmit = (data) => {
+    const email = data?.email || 'junior@heroui.com';
+    if (onSignupSuccess) onSignupSuccess(email);
+    navigate('/app');
+  };
+
+  return (
+    <main className={`min-h-screen w-full transition-colors duration-300 ${
+      isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
+    }`}>
+      <Auth2 
+        signInPromptText="Already have an account?"
+        signInLinkText="Sign in"
+        onSignInClick={() => navigate('/login')}
+        onBackToHome={() => navigate('/')}
+        onSubmit={(data) => handleSignupSubmit(data)}
+        isDarkMode={isDarkMode}
+      />
+    </main>
+  );
+}
+
+function App() {
+  const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState('junior@heroui.com');
+  const [customNotes, setCustomNotes] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const toggleTheme = () => setIsDarkMode((prev) => !prev);
+
+  const handleSaveNote = (newNote) => {
+    setCustomNotes((prev) => [newNote, ...prev]);
+  };
+
+  return (
+    <Routes>
+      {/* Public Landing Web Home - Locked to White/Light Theme */}
+      <Route
+        path="/"
+        element={
+          <WebHome
+            onGetStarted={() => navigate('/signup')}
+            isDarkMode={false}
+          />
+        }
+      />
+
+      {/* Auth Pages - Locked to White/Light Theme */}
+      <Route
+        path="/login"
+        element={<LoginPage isDarkMode={false} onLoginSuccess={(email) => setUserEmail(email)} />}
+      />
+      <Route
+        path="/signup"
+        element={<SignupPage isDarkMode={false} onSignupSuccess={(email) => setUserEmail(email)} />}
+      />
+
+      {/* Notion-Style Create Note Page */}
+      <Route
+        path="/create"
+        element={
+          <CreateNotePage
+            isDarkMode={isDarkMode}
+            onToggleTheme={toggleTheme}
+            onSaveNote={handleSaveNote}
+          />
+        }
+      />
+
+      {/* Main App Dashboard */}
+      <Route
+        path="/app"
+        element={
+          <ClientHome
+            userEmail={userEmail}
+            onSignOut={() => navigate('/')}
+            customNotes={customNotes}
+            isDarkMode={isDarkMode}
+            onToggleTheme={toggleTheme}
+          />
+        }
+      />
+
+      {/* Direct dev testing bypass route */}
+      <Route
+        path="/dev"
+        element={
+          <ClientHome
+            userEmail="dev-test@heroui.com"
+            onSignOut={() => navigate('/')}
+            customNotes={customNotes}
+            isDarkMode={isDarkMode}
+            onToggleTheme={toggleTheme}
+          />
+        }
+      />
+
+      {/* Feed alias */}
+      <Route
+        path="/feed"
+        element={<Navigate to="/app" replace />}
+      />
+
+      {/* Catch-all redirect */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default App;

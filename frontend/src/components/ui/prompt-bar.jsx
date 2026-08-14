@@ -59,9 +59,21 @@ export function PromptTextarea({ value, onChange, onSubmit, isDarkMode = false, 
 export function ModeSelector({ mode, onSelectMode, isDarkMode = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const options = ["Auto", "GPT-4o", "Claude 3.5", "Perplexity"];
+  const selectorRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleClickOutside = (e) => {
+      if (selectorRef.current && !selectorRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
 
   return (
-    <div className="relative">
+    <div ref={selectorRef} className="relative">
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}

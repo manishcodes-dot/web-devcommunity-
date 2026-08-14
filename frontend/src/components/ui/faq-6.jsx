@@ -81,18 +81,18 @@ export function Faq6({
                   key={faq.id}
                   value={faq.id}
                   className={`rounded-2xl px-6 py-1 transition-all ${
-                    isDarkMode ? 'bg-[#222831] border border-[#393e46]' : 'bg-[#eeeeee]/60 border border-[#393e46]/20 shadow-xs'
+                    isDarkMode ? 'bg-[#222831] border border-[#393e46]' : 'bg-white border border-slate-200 shadow-xs'
                   }`}
                 >
                   <AccordionTrigger className="group flex items-center py-5 hover:no-underline [&_[data-slot=accordion-trigger-icon]]:!hidden cursor-pointer">
                     <div className="flex flex-1 items-center gap-4 md:gap-6">
                       <span className={`text-xs font-semibold tracking-widest ${
-                        isDarkMode ? 'text-[#eeeeee]/60' : 'text-[#393e46]/60'
+                        isDarkMode ? 'text-[#eeeeee]/60' : 'text-slate-400'
                       }`}>
                         Q{index + 1}
                       </span>
                       <span className={`text-left text-base font-medium md:text-lg transition-colors group-hover:text-[#2FA084] ${
-                        isDarkMode ? 'text-[#eeeeee]' : 'text-[#222831]'
+                        isDarkMode ? 'text-[#eeeeee]' : 'text-slate-900'
                       }`}>
                         {faq.question}
                       </span>
@@ -100,7 +100,7 @@ export function Faq6({
                     <div className={`ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors ${
                       isDarkMode
                         ? 'bg-[#393e46] text-[#eeeeee] group-hover:bg-[#2FA084] group-hover:text-white'
-                        : 'bg-[#eeeeee] text-[#393e46] group-hover:bg-[#2FA084] group-hover:text-white'
+                        : 'bg-slate-100 text-slate-700 group-hover:bg-[#2FA084] group-hover:text-white'
                     }`}>
                       <FaPlus className="block h-3 w-3 group-data-[state=open]:hidden" />
                       <FaMinus className="hidden h-3 w-3 group-data-[state=open]:block" />

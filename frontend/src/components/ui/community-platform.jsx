@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FaHeart,
   FaRegHeart,
@@ -264,9 +264,14 @@ const TESTIMONIALS = [
   },
 ];
 
-export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [articles, setArticles] = useState(INITIAL_ARTICLES);
+export function CommunityPlatform({
+  userEmail = "junior@heroui.com",
+  onSignOut,
+  hideSidebar = false,
+  isDarkMode = false,
+  onToggleTheme,
+}) {
+  const [articles, setArticles] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedArticle, setSelectedArticle] = useState(null);
@@ -279,6 +284,23 @@ export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) 
   const [currentPageNum, setCurrentPageNum] = useState(1);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const notifRef = useRef(null);
+  const profileRef = useRef(null);
+
+  // Click outside listener for popovers
+  useEffect(() => {
+    if (!notificationsOpen && !profileOpen) return;
+    const handleClickOutside = (e) => {
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotificationsOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setProfileOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [notificationsOpen, profileOpen]);
 
   // Animated counters state
   const [stats, setStats] = useState({
@@ -499,7 +521,7 @@ export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) 
             />
 
             {/* Notifications Popover Toggle */}
-            <div className="relative">
+            <div ref={notifRef} className="relative">
               <button
                 type="button"
                 onClick={() => setNotificationsOpen((v) => !v)}
@@ -561,7 +583,7 @@ export function CommunityPlatform({ userEmail = "alex@company.io", onSignOut }) 
             </div>
 
             {/* Profile Dropdown Toggle */}
-            <div className="relative">
+            <div ref={profileRef} className="relative">
               <button
                 type="button"
                 onClick={() => setProfileOpen((v) => !v)}

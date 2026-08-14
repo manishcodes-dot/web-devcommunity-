@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Search,
   Home,
@@ -45,12 +45,26 @@ export function HeroSidebar({
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const profileRef = useRef(null)
+
+  // Listen for outside click to close profile popover
+  useEffect(() => {
+    if (!isProfileOpen) return
+    const handleClickOutside = (e) => {
+      if (profileRef.current && !profileRef.current.contains(e.target)) {
+        setIsProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [isProfileOpen])
 
   // Listen for physical Escape key & ⌘K/Ctrl+K keyboard shortcut
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' || e.key === 'Esc') {
         setIsSearchOpen(false)
+        setIsProfileOpen(false)
       }
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault()
@@ -73,7 +87,7 @@ export function HeroSidebar({
         isCollapsed ? 'w-16' : 'w-64'
       } ${
         isDarkMode
-          ? 'bg-[#09090b] text-zinc-300 border-zinc-800/80'
+          ? 'bg-[#1c222a] text-zinc-300 border-zinc-800/80'
           : 'bg-white text-slate-700 border-slate-200/80 shadow-xs'
       }`}
     >
@@ -276,7 +290,7 @@ export function HeroSidebar({
       </div>
 
       {/* Bottom Profile Popover & Trigger */}
-      <div className="relative pt-2">
+      <div ref={profileRef} className="relative pt-2">
         {/* Floating Popover Menu */}
         {isProfileOpen && !isCollapsed && (
           <div className={`absolute bottom-full mb-2 left-0 right-0 z-50 border rounded-2xl p-3.5 shadow-xl space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-150 ${

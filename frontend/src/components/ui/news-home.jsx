@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   FaSearch,
   FaHeart,
@@ -15,141 +16,23 @@ import {
   FaUser,
   FaBan,
   FaFlag,
+  FaPlus,
 } from "react-icons/fa";
 
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import PromptBar from "@/components/ui/prompt-bar";
 import AiChatBot from "@/components/ui/ai-chat-bot";
+import { fetchArticlesApi } from "@/services/articleService";
 
 /**
  * INITIAL_ARTICLES
  * Sample feed articles dataset with rich text content, categories, author profiles, and metrics.
  */
-const INITIAL_ARTICLES = [
-  {
-    title: "The Architecture of Modern Web Applications in 2026",
-    excerpt:
-      "Why monolithic simplicity is returning, how edge compute changes state management, and what we learned after building platforms for millions of concurrent readers.",
-    content: `For a decade, frontend development was defined by extreme fragmentation. We broke apps into dozens of micro-frontends, split state across complex client caches, and treated server-rendering as an afterthought.
-
-Now, in 2026, the pendulum has swung back toward elegant simplicity. Edge runtimes have made server-side rendering near-instantaneous. Frameworks have unified data fetching and component rendering into cohesive, type-safe paradigms.
-
-In this deep dive, we explore the patterns that define high-scale publishing and web apps today:
-1. Zero-bundle component boundaries
-2. Streaming HTML with optimistic UI hydration
-3. Local-first data caching with real-time sync engines
-
-By focusing on these core primitives, development teams deliver 10x faster page loads while maintaining clean codebase ergonomics.`,
-    category: "Architecture",
-    author: "Elena Rostova",
-    authorHandle: "@elena_tech",
-    authorAvatar: "ER",
-    publishedAt: "2 hours ago",
-    readTime: "6 min read",
-    claps: 1420,
-    commentsCount: 38,
-    isLiked: false,
-    isBookmarked: false,
-    isFeatured: true,
-    coverImage: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "2",
-    title: "Why Minimalist UI Design Outperforms Heavy Visual Trends",
-    excerpt:
-      "In an era of cognitive overload, clarity is the ultimate luxury. How stripped-down typography and precise layout hierarchy drive 3x higher user engagement.",
-    content: `Visual noise is the enemy of user retention. When every element on a screen demands attention with bright badges, glowing borders, and competing animations, users experience cognitive fatigue.
-
-Minimalism in digital design isn't about removing features—it's about intentional focus. By utilizing generous whitespace, consistent typographic scales, and functional color accents, modern interfaces guide the user's eye effortlessly.
-
-Key principles of effective functional UI:
-- Visual hierarchy driven by weight and scale rather than decorative containers
-- Micro-interactions that provide clear feedback without interrupting flow
-- Accessible contrast ratios that perform flawlessly across light and dark modes`,
-    category: "Design System",
-    author: "Marcus Chen",
-    authorHandle: "@marcus_design",
-    authorAvatar: "MC",
-    publishedAt: "4 hours ago",
-    readTime: "4 min read",
-    claps: 890,
-    commentsCount: 22,
-    isLiked: false,
-    isBookmarked: false,
-    isFeatured: false,
-    coverImage: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "3",
-    title: "Navigating the Next Cycle of Global Tech Markets",
-    excerpt:
-      "An in-depth analysis of capital flows, venture fund deployments, and why vertical software SaaS is experiencing a quiet revival.",
-    content: `After two years of market recalibration, tech investments have found a durable new baseline. Investors are no longer funding growth at all costs; instead, operational durability and net revenue retention have become the primary metrics of business health.
-
-Vertical software platforms—custom-built for specific industries like healthcare, logistics, and energy—are capturing the highest valuations. By embedding payments, AI workflows, and compliance tooling directly into workflow software, these platforms create deep defensibility.`,
-    category: "Market Pulse",
-    author: "Sarah Jenkins",
-    authorHandle: "@sarah_vc",
-    authorAvatar: "SJ",
-    publishedAt: "6 hours ago",
-    readTime: "8 min read",
-    claps: 2310,
-    commentsCount: 94,
-    isLiked: true,
-    isBookmarked: true,
-    isFeatured: false,
-    coverImage: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "4",
-    title: "Building Resilient AI Agents with Deterministic Safeguards",
-    excerpt:
-      "Large language models are non-deterministic by nature. Here is how production engineering teams wrap probabilistic outputs in reliable state machines.",
-    content: `Autonomous AI agents hold immense promise for automating complex multi-step workflows. However, deploying them to production environments requires strict safety boundaries.
-
-Without deterministic guardrails, agentic loops can hallucinate API calls or get stuck in infinite retries. In this article, we break down the architecture of stateful agent supervision:
-- Schema validation at every tool call boundary
-- Human-in-the-loop approval triggers for high-consequence actions
-- Reversible execution logs with full step rollback capabilities`,
-    category: "AI & Data",
-    author: "Devon Vance",
-    authorHandle: "@devon_ai",
-    authorAvatar: "DV",
-    publishedAt: "12 hours ago",
-    readTime: "5 min read",
-    claps: 1750,
-    commentsCount: 45,
-    isLiked: false,
-    isBookmarked: false,
-    isFeatured: false,
-    coverImage: "https://images.unsplash.com/photo-1677442136019-21780efad99a?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: "5",
-    title: "The Developer's Guide to High-Performance CSS & Rendering Engines",
-    excerpt:
-      "Understanding browser compositing layers, sub-pixel grid alignment, and CSS containment for 60fps animations.",
-    content: `Smooth 60fps animations elevate a good web app into a great user experience. But achieving consistent frame rates across low-end mobile devices and high-refresh desktop displays requires a deep understanding of browser rendering pipelines.
-
-Learn how to leverage transform3d, opacity shifts, and layout containment flags to avoid triggering expensive layout recalculations during active user scroll.`,
-    category: "Frontend",
-    author: "Elena Rostova",
-    authorHandle: "@elena_tech",
-    authorAvatar: "ER",
-    publishedAt: "1 day ago",
-    readTime: "7 min read",
-    claps: 1120,
-    commentsCount: 19,
-    isLiked: false,
-    isBookmarked: false,
-    isFeatured: false,
-    coverImage: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
-  },
-];
+const INITIAL_ARTICLES = [];
 
 const CATEGORIES = [
   "For You",
-  "Architecture",
+  "General",
   "Design System",
   "Market Pulse",
   "AI & Data",
@@ -163,7 +46,9 @@ export function NewsHome({
   isDarkMode: controlledIsDarkMode,
   externalCreateOpen,
   onCloseExternalCreate,
+  customNotes = [],
 }) {
+  const navigate = useNavigate();
   const [articles, setArticles] = useState(INITIAL_ARTICLES);
   const [selectedCategory, setSelectedCategory] = useState("For You");
   const [searchQuery, setSearchQuery] = useState("");
@@ -175,6 +60,16 @@ export function NewsHome({
     setInternalIsDarkMode(typeof val === "function" ? val(isDarkMode) : val);
   const [followedWriters, setFollowedWriters] = useState({});
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Close article options menu popover on click outside
+  useEffect(() => {
+    if (openMenuId === null) return;
+    const handleClickOutside = () => {
+      setOpenMenuId(null);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [openMenuId]);
 
   // Article creation state
   const [internalIsCreateOpen, setInternalIsCreateOpen] = useState(false);
@@ -207,9 +102,7 @@ export function NewsHome({
       commentsCount: 0,
       isLiked: false,
       isBookmarked: false,
-      coverImage:
-        newCoverImage ||
-        "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80",
+      coverImage: newCoverImage.trim() || "",
     };
 
     setArticles([createdArt, ...articles]);
@@ -268,27 +161,26 @@ export function NewsHome({
     }));
   };
 
-  // Filter articles based on Category and Search
-  const filteredArticles = articles.filter((art) => {
-    const matchesCategory =
-      selectedCategory === "For You" ||
-      selectedCategory === "Following" ||
-      art.category === selectedCategory;
+  // Combine user-created customNotes and backend articles
+  const allArticles = [...customNotes, ...articles];
 
-    const matchesSearch =
-      art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      art.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      art.author.toLowerCase().includes(searchQuery.toLowerCase());
-
-    return matchesCategory && matchesSearch;
+  // Filter articles based on Search query
+  const filteredArticles = allArticles.filter((art) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      art.title?.toLowerCase().includes(query) ||
+      art.excerpt?.toLowerCase().includes(query) ||
+      art.author?.toLowerCase().includes(query)
+    );
   });
 
   return (
     <div
       className={`min-h-screen w-full font-sans transition-colors duration-300 flex flex-col md:flex-row ${
         isDarkMode
-          ? "bg-[#09090b] text-zinc-100 selection:bg-emerald-500 selection:text-white"
-          : "bg-[#f8fafc] text-slate-900 selection:bg-emerald-500 selection:text-white"
+          ? "bg-[#222831] text-[#eeeeee] selection:bg-[#2FA084] selection:text-white"
+          : "bg-[#eeeeee] text-[#222831] selection:bg-[#2FA084] selection:text-white"
       }`}
     >
       {/* 1. Optional Standalone Left Sidebar (Only rendered if hideSidebar is false) */}
@@ -296,7 +188,7 @@ export function NewsHome({
         <aside
           className={`w-full md:w-64 md:h-screen md:fixed md:top-0 md:left-0 shrink-0 border-r flex flex-col justify-between p-4 z-40 transition-colors duration-300 ${
             isDarkMode
-              ? "border-zinc-800/80 bg-[#09090b] text-zinc-300"
+              ? "border-zinc-800/80 bg-[#1c222a] text-zinc-300"
               : "border-slate-200/80 bg-white text-slate-700 shadow-xs"
           }`}
         >
@@ -538,7 +430,7 @@ export function NewsHome({
               {/* Create New Note Button on Right Side of Search Bar */}
               <button
                 type="button"
-                onClick={() => setIsCreateOpen(true)}
+                onClick={() => navigate('/create')}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-xs sm:text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm hover:shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
               >
                 <FaPen className="h-3.5 w-3.5" />
@@ -554,21 +446,29 @@ export function NewsHome({
                     isDarkMode ? "text-white" : "text-slate-900"
                   }`}
                 >
-                  {selectedCategory} Articles ({filteredArticles.length})
+                  Articles & Notes ({filteredArticles.length})
                 </h2>
               </div>
 
               {filteredArticles.length === 0 ? (
                 <div
-                  className={`rounded-3xl border p-12 text-center ${
+                  className={`rounded-3xl border p-12 text-center space-y-4 ${
                     isDarkMode
                       ? "bg-[#18181b] border-zinc-800/80 text-zinc-400"
                       : "bg-white border-slate-200/80 text-slate-500 shadow-xs"
                   }`}
                 >
                   <p className="text-sm font-medium">
-                    No articles found matching your criteria.
+                    No articles found. Be the first to create one!
                   </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/create')}
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer"
+                  >
+                    <FaPlus className="h-3.5 w-3.5" />
+                    <span>Create Your First Note</span>
+                  </button>
                 </div>
               ) : (
                 filteredArticles.map((art) => (
