@@ -4,7 +4,7 @@ import { HTTP_STATUS } from '../constants/statusCodes.js';
 import * as articleService from '../services/articleService.js';
 
 export const getArticles = asyncHandler(async (req, res) => {
-  const result = await articleService.getArticles(req.query);
+  const result = await articleService.getArticles(req.query, req.user);
   return new ApiResponse(HTTP_STATUS.OK, result, 'Articles retrieved successfully').send(res);
 });
 

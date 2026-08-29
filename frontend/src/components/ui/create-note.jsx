@@ -22,13 +22,16 @@ import {
   Sun,
   Moon,
   UploadCloud,
+  Globe,
+  Lock,
 } from 'lucide-react';
 import { createArticleApi } from '@/services/articleService';
 
-export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote }) {
+export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, userEmail = 'junior@heroui.com' }) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [coverImage, setCoverImage] = useState('');
+  const [isPrivate, setIsPrivate] = useState(false);
   const [showImageInput, setShowImageInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftSavedStatus, setDraftSavedStatus] = useState(false);
@@ -126,10 +129,12 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote }
           : firstParagraph,
       content: blocks.map((b) => b.content).join('\n\n') || title,
       status: 'draft',
+      isPrivate,
       coverImage: coverImage || '',
-      author: 'Junior Garcia',
-      authorHandle: '@junior',
-      authorAvatar: 'JG',
+      author: userEmail.split('@')[0] || 'Junior Garcia',
+      authorEmail: userEmail,
+      authorHandle: `@${(userEmail.split('@')[0] || 'junior').toLowerCase()}`,
+      authorAvatar: (userEmail.substring(0, 2) || 'JG').toUpperCase(),
       publishedAt: 'Draft (Just now)',
       claps: 0,
       commentsCount: 0,
@@ -178,10 +183,12 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote }
       title: title.trim(),
       excerpt,
       content: fullContent || title,
+      isPrivate,
       coverImage: coverImage.trim() || '',
-      author: 'Junior Garcia',
-      authorHandle: '@junior',
-      authorAvatar: 'JG',
+      author: userEmail.split('@')[0] || 'Junior Garcia',
+      authorEmail: userEmail,
+      authorHandle: `@${(userEmail.split('@')[0] || 'junior').toLowerCase()}`,
+      authorAvatar: (userEmail.substring(0, 2) || 'JG').toUpperCase(),
       publishedAt: 'Just now',
       claps: 0,
       commentsCount: 0,
@@ -197,18 +204,13 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote }
         summary: noteData.excerpt,
         content: noteData.content,
         coverImage: noteData.coverImage,
-      }).catch(() => {});
+        isPrivate: noteData.isPrivate,
+      });
 
-      if (onSaveNote) {
-        onSaveNote(noteData);
-      }
       navigate('/app');
     } catch (err) {
-      console.error(err);
-      if (onSaveNote) {
-        onSaveNote(noteData);
-      }
-      navigate('/app');
+      console.error('Failed to publish note to database:', err);
+      alert(err.message || 'Failed to publish note. Please check your internet connection or login status.');
     } finally {
       setIsSubmitting(false);
     }
@@ -316,6 +318,21 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote }
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Public / Private Visibility Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsPrivate(!isPrivate)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+              isPrivate
+                ? 'bg-amber-500/10 border-amber-500/40 text-amber-500 hover:bg-amber-500/20'
+                : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
+            }`}
+            title={isPrivate ? "Private: Only you can see this note" : "Public: Everyone can see this note"}
+          >
+            {isPrivate ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
+            <span>{isPrivate ? 'Private' : 'Public'}</span>
+          </button>
+
           {/* Save as Draft Button */}
           <button
             type="button"

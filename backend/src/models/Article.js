@@ -27,7 +27,7 @@ const articleSchema = new mongoose.Schema(
     },
     coverImage: {
       type: String,
-      default: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?auto=format&fit=crop&q=80&w=800',
+      default: '',
     },
     author: {
       type: mongoose.Schema.Types.ObjectId,
@@ -38,7 +38,7 @@ const articleSchema = new mongoose.Schema(
     category: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Category',
-      required: [true, 'Category is required'],
+      required: false,
       index: true,
     },
     tags: [
@@ -57,6 +57,10 @@ const articleSchema = new mongoose.Schema(
       default: 0,
     },
     isFeatured: {
+      type: Boolean,
+      default: false,
+    },
+    isPrivate: {
       type: Boolean,
       default: false,
     },

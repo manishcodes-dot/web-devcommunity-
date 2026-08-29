@@ -11,3 +11,7 @@ export const fetchArticleByIdApi = async (id) => {
 export const createArticleApi = async (articleData) => {
   return await axiosClient.post('/articles', articleData);
 };
+
+export const deleteArticleApi = async (id) => {
+  return await axiosClient.delete(`/articles/${id}`);
+};

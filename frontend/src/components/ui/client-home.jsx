@@ -2,9 +2,11 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import HeroSidebar from './hero-sidebar'
 import NewsHome from './news-home'
+import UserProfileView from './user-profile'
 
 export function ClientHome({
   userEmail,
+  currentUser,
   onSignOut,
   customNotes = [],
   isDarkMode: controlledIsDarkMode,
@@ -30,6 +32,8 @@ export function ClientHome({
       {/* Hero Sidebar on the Left */}
       <HeroSidebar
         activeItem={activeSection}
+        currentUser={currentUser}
+        userEmail={userEmail}
         isDarkMode={isDarkMode}
         onToggleTheme={handleToggleTheme}
         onSelect={(item) => {
@@ -47,10 +51,12 @@ export function ClientHome({
       <div className={`flex-1 h-screen overflow-y-auto transition-colors duration-200 ${
         isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
       }`}>
-        {activeSection === 'Home' || activeSection === 'Explore' || activeSection === 'Bookmarks' ? (
+        {activeSection === 'Home' || activeSection === 'Explore' || activeSection === 'Bookmarks' || activeSection === 'My Notes' ? (
           <div className="h-full">
             <NewsHome
               userEmail={userEmail}
+              currentUser={currentUser}
+              myNotesOnly={activeSection === 'My Notes'}
               onSignOut={onSignOut}
               hideSidebar={true}
               isDarkMode={isDarkMode}
@@ -58,6 +64,13 @@ export function ClientHome({
               customNotes={customNotes}
             />
           </div>
+        ) : activeSection === 'Profile' || activeSection === 'Dashboard' || activeSection === 'Settings' ? (
+          <UserProfileView
+            currentUser={currentUser}
+            userEmail={userEmail}
+            isDarkMode={isDarkMode}
+            onBackToFeed={() => setActiveSection('Home')}
+          />
         ) : (
           <div className="p-8 max-w-6xl mx-auto space-y-6">
             <div className={`flex items-center justify-between border-b pb-4 ${

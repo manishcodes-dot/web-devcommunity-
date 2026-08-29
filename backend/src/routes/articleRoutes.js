@@ -7,16 +7,15 @@ import {
   deleteArticle,
 } from '../controllers/articleController.js';
 import { getArticleComments, createComment } from '../controllers/commentController.js';
-import { protect, authorize } from '../middleware/auth.js';
+import { protect, optionalProtect } from '../middleware/auth.js';
 import { validateArticle } from '../validators/articleValidator.js';
-import { ROLES } from '../constants/roles.js';
 
 const router = express.Router();
 
 router
   .route('/')
-  .get(getArticles)
-  .post(protect, authorize(ROLES.EDITOR, ROLES.ADMIN), validateArticle, createArticle);
+  .get(optionalProtect, getArticles)
+  .post(protect, validateArticle, createArticle);
 
 router
   .route('/:id')

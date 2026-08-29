@@ -17,12 +17,15 @@ import {
   FaBan,
   FaFlag,
   FaPlus,
+  FaLock,
+  FaGlobe,
+  FaTrash,
 } from "react-icons/fa";
 
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 import PromptBar from "@/components/ui/prompt-bar";
 import AiChatBot from "@/components/ui/ai-chat-bot";
-import { fetchArticlesApi } from "@/services/articleService";
+import { fetchArticlesApi, deleteArticleApi } from "@/services/articleService";
 
 /**
  * INITIAL_ARTICLES
@@ -41,6 +44,8 @@ const CATEGORIES = [
 
 export function NewsHome({
   userEmail = "admin@company.io",
+  currentUser,
+  myNotesOnly = false,
   onSignOut,
   hideSidebar = false,
   isDarkMode: controlledIsDarkMode,
@@ -71,6 +76,38 @@ export function NewsHome({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [openMenuId]);
 
+  // Fetch real articles from backend MongoDB database
+  useEffect(() => {
+    const loadBackendArticles = async () => {
+      try {
+        const params = myNotesOnly ? { myNotes: 'true' } : {};
+        const response = await fetchArticlesApi(params);
+        const apiArticles = response.data?.articles || response.articles || [];
+        const formatted = apiArticles.map((art) => ({
+          id: art._id,
+          title: art.title,
+          excerpt: art.summary || art.content?.substring(0, 150) || '',
+          content: art.content,
+          category: art.category?.name || 'General',
+          isPrivate: Boolean(art.isPrivate),
+          author: art.author?.name || 'Community Writer',
+          authorEmail: art.author?.email || '',
+          authorId: art.author?._id || art.author?.id || art.author,
+          authorAvatar: art.author?.avatar || '',
+          publishedAt: art.createdAt ? new Date(art.createdAt).toLocaleDateString() : 'Recently',
+          claps: art.viewsCount || 0,
+          commentsCount: 0,
+          isLiked: false,
+          isBookmarked: false,
+        }));
+        setArticles(formatted);
+      } catch (err) {
+        console.error('Failed to fetch articles from database:', err.message);
+      }
+    };
+    loadBackendArticles();
+  }, [myNotesOnly]);
+
   // Article creation state
   const [internalIsCreateOpen, setInternalIsCreateOpen] = useState(false);
   const isCreateOpen = externalCreateOpen !== undefined ? externalCreateOpen : internalIsCreateOpen;
@@ -83,6 +120,7 @@ export function NewsHome({
   const [newContent, setNewContent] = useState("");
   const [newCategory, setNewCategory] = useState("Architecture");
   const [newCoverImage, setNewCoverImage] = useState("");
+  const [newIsPrivate, setNewIsPrivate] = useState(false);
 
   const handleCreateArticle = (e) => {
     e.preventDefault();
@@ -94,7 +132,9 @@ export function NewsHome({
       excerpt: newExcerpt || newTitle,
       content: newContent || newExcerpt || newTitle,
       category: newCategory,
+      isPrivate: newIsPrivate,
       author: userEmail.split("@")[0] || "Junior Garcia",
+      authorEmail: userEmail,
       authorHandle: `@${(userEmail.split("@")[0] || "junior").toLowerCase()}`,
       authorAvatar: (userEmail.substring(0, 2) || "JG").toUpperCase(),
       publishedAt: "Just now",
@@ -111,6 +151,7 @@ export function NewsHome({
     setNewExcerpt("");
     setNewContent("");
     setNewCoverImage("");
+    setNewIsPrivate(false);
   };
 
   // Clap / Like handler
@@ -161,11 +202,30 @@ export function NewsHome({
     }));
   };
 
-  // Combine user-created customNotes and backend articles
-  const allArticles = [...customNotes, ...articles];
+  // Deduplicate articles between customNotes and backend articles by title/id
+  const articleTitles = new Set(articles.map((a) => a.title?.trim().toLowerCase()));
+  const uniqueCustomNotes = customNotes.filter(
+    (cn) => !articleTitles.has(cn.title?.trim().toLowerCase())
+  );
+  const allArticles = [...articles, ...uniqueCustomNotes];
 
-  // Filter articles based on Search query
+  // Filter articles based on Search query & Public/Private visibility rules
   const filteredArticles = allArticles.filter((art) => {
+    // 1. Visibility Check: If private, only show to the author who wrote it
+    if (art.isPrivate) {
+      const currentUserName = (userEmail.split("@")[0] || "junior").toLowerCase();
+      const isAuthorByEmail =
+        art.authorEmail &&
+        art.authorEmail.toLowerCase() === userEmail.toLowerCase();
+      const isAuthorByName =
+        art.author && art.author.toLowerCase() === currentUserName;
+
+      if (!isAuthorByEmail && !isAuthorByName) {
+        return false;
+      }
+    }
+
+    // 2. Search query filter
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
@@ -346,9 +406,17 @@ export function NewsHome({
             {/* Article Content Header & Body */}
             <div className="space-y-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full font-bold bg-emerald-500 text-white shadow-sm">
-                  {selectedArticle.authorAvatar}
-                </div>
+                {selectedArticle.authorAvatar && typeof selectedArticle.authorAvatar === 'string' && selectedArticle.authorAvatar.startsWith('http') ? (
+                  <img
+                    src={selectedArticle.authorAvatar}
+                    alt={selectedArticle.author || 'Author'}
+                    className="h-10 w-10 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
+                  />
+                ) : (
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-sm">
+                    {(selectedArticle.author || 'Author').substring(0, 2).toUpperCase()}
+                  </div>
+                )}
                 <div>
                   <h4 className="font-bold text-sm">{selectedArticle.author}</h4>
                   <p
@@ -485,9 +553,17 @@ export function NewsHome({
                       {/* Left Column: Author, Title & Excerpt */}
                       <div className="flex-1 min-w-0 space-y-3">
                         <div className="flex items-center gap-2.5 text-xs">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
-                            {art.authorAvatar}
-                          </div>
+                          {art.authorAvatar && typeof art.authorAvatar === 'string' && art.authorAvatar.startsWith('http') ? (
+                            <img
+                              src={art.authorAvatar}
+                              alt={art.author || 'Author'}
+                              className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
+                            />
+                          ) : (
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold bg-emerald-500 text-white shadow-xs">
+                              {(art.author || 'Author').substring(0, 2).toUpperCase()}
+                            </div>
+                          )}
                           <span
                             className={`font-semibold ${
                               isDarkMode ? "text-zinc-200" : "text-slate-800"
@@ -500,6 +576,28 @@ export function NewsHome({
                           </span>
                           <span className={isDarkMode ? "text-zinc-400" : "text-slate-500"}>
                             {art.publishedAt}
+                          </span>
+                          <span className={isDarkMode ? "text-zinc-600" : "text-slate-300"}>
+                            •
+                          </span>
+                          <span
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold border ${
+                              art.isPrivate
+                                ? "bg-amber-500/10 border-amber-500/30 text-amber-500"
+                                : "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                            }`}
+                          >
+                            {art.isPrivate ? (
+                              <>
+                                <FaLock className="h-2.5 w-2.5" />
+                                <span>Private</span>
+                              </>
+                            ) : (
+                              <>
+                                <FaGlobe className="h-2.5 w-2.5" />
+                                <span>Public</span>
+                              </>
+                            )}
                           </span>
                         </div>
 
@@ -666,17 +764,59 @@ export function NewsHome({
 
                               <div className="my-1 border-t border-slate-200/60 dark:border-zinc-800/60" />
 
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setOpenMenuId(null);
-                                  alert(`Reported "${art.title}" to moderators`);
-                                }}
-                                className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-xl font-medium text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
-                              >
-                                <FaFlag className="h-3.5 w-3.5" />
-                                <span>Report</span>
-                              </button>
+                              {Boolean(
+                                currentUser && (
+                                  (art.authorId && (art.authorId === currentUser._id || art.authorId === currentUser.id || String(art.authorId) === String(currentUser._id))) ||
+                                  (art.authorEmail && currentUser.email && art.authorEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+                                  (art.author && currentUser.name && art.author.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
+                                )
+                              ) ? (
+                                <button
+                                  type="button"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    const targetId = art.id || art._id;
+                                    if (window.confirm(`Are you sure you want to delete "${art.title}"?`)) {
+                                      try {
+                                        await deleteArticleApi(targetId);
+                                      } catch (err) {
+                                        console.error('Delete API error:', err);
+                                      }
+
+                                      setArticles((prev) => prev.filter((a) => a.id !== targetId && a._id !== targetId && a.title !== art.title));
+
+                                      try {
+                                        const saved = localStorage.getItem('news_custom_notes');
+                                        if (saved) {
+                                          const parsed = JSON.parse(saved);
+                                          const filtered = parsed.filter((n) => n.id !== targetId && n._id !== targetId && n.title !== art.title);
+                                          localStorage.setItem('news_custom_notes', JSON.stringify(filtered));
+                                        }
+                                      } catch (err) {
+                                        console.error('Failed to clear custom notes:', err);
+                                      }
+                                    }
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-xl font-medium text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                >
+                                  <FaTrash className="h-3.5 w-3.5" />
+                                  <span>Delete Article</span>
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setOpenMenuId(null);
+                                    alert(`Reported "${art.title}" to moderators`);
+                                  }}
+                                  className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-xl font-medium text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                                >
+                                  <FaFlag className="h-3.5 w-3.5" />
+                                  <span>Report</span>
+                                </button>
+                              )}
                             </div>
                           )}
                         </div>
@@ -811,6 +951,43 @@ export function NewsHome({
                       : "bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400"
                   }`}
                 />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-slate-600 dark:text-zinc-400">
+                  Note Visibility
+                </label>
+                <div className="flex items-center gap-3 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setNewIsPrivate(false)}
+                    className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      !newIsPrivate
+                        ? "bg-emerald-500/10 border-emerald-500 text-emerald-500 shadow-xs"
+                        : isDarkMode
+                        ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FaGlobe className="h-3.5 w-3.5" />
+                    <span>Public (Everyone)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setNewIsPrivate(true)}
+                    className={`flex-1 flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                      newIsPrivate
+                        ? "bg-amber-500/10 border-amber-500 text-amber-500 shadow-xs"
+                        : isDarkMode
+                        ? "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                        : "bg-slate-50 border-slate-200 text-slate-600 hover:text-slate-900"
+                    }`}
+                  >
+                    <FaLock className="h-3.5 w-3.5" />
+                    <span>Private (Only Me)</span>
+                  </button>
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-3">

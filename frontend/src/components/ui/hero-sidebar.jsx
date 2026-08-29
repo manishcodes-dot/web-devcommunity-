@@ -27,7 +27,9 @@ export function HeroSidebar({
   isDarkMode = false,
   onToggleTheme,
   isCollapsed: controlledIsCollapsed,
-  onToggleCollapse: controlledOnToggleCollapse
+  onToggleCollapse: controlledOnToggleCollapse,
+  currentUser,
+  userEmail,
 }) {
   const [internalIsCollapsed, setInternalIsCollapsed] = useState(false)
   const isCollapsed = controlledIsCollapsed !== undefined ? controlledIsCollapsed : internalIsCollapsed
@@ -144,12 +146,12 @@ export function HeroSidebar({
             {!isCollapsed && <span>Home</span>}
           </button>
 
-          {/* Explore */}
+          {/* My Notes */}
           <button
-            onClick={() => handleNavClick('Explore')}
-            title="Explore"
+            onClick={() => handleNavClick('My Notes')}
+            title="My Notes"
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
-              currentActive === 'Explore'
+              currentActive === 'My Notes'
                 ? isDarkMode
                   ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
                   : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
@@ -158,8 +160,8 @@ export function HeroSidebar({
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
             }`}
           >
-            <Compass className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span>Explore</span>}
+            <FileText className="w-4 h-4 flex-shrink-0" />
+            {!isCollapsed && <span>My Notes</span>}
           </button>
 
           {/* Bookmarks */}
@@ -302,13 +304,23 @@ export function HeroSidebar({
             <div className={`flex items-center gap-3 pb-2 border-b ${
               isDarkMode ? 'border-zinc-800/50' : 'border-slate-100'
             }`}>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex-shrink-0 shadow-inner" />
+              {currentUser?.avatar ? (
+                <img
+                  src={currentUser.avatar}
+                  alt="Profile Avatar"
+                  className="w-9 h-9 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center font-bold text-white text-xs shrink-0 shadow-inner">
+                  {(currentUser?.name || userEmail || 'JG').substring(0, 2).toUpperCase()}
+                </div>
+              )}
               <div className="overflow-hidden">
                 <div className={`font-semibold text-sm truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                  Junior Garcia
+                  {currentUser?.name || userEmail?.split('@')[0] || 'Junior Garcia'}
                 </div>
                 <div className={`text-xs truncate ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-                  junior@heroui.com
+                  {currentUser?.email || userEmail || 'junior@heroui.com'}
                 </div>
               </div>
             </div>
@@ -401,7 +413,7 @@ export function HeroSidebar({
         {/* Bottom Profile Trigger Bar */}
         <button
           onClick={() => isCollapsed ? toggleCollapse() : setIsProfileOpen(!isProfileOpen)}
-          title="Junior"
+          title={currentUser?.name || 'Profile'}
           className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-2.5 py-2'} rounded-xl transition-colors text-left group ${
             isDarkMode
               ? 'hover:bg-zinc-900/80 text-white'
@@ -409,8 +421,18 @@ export function HeroSidebar({
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex-shrink-0 shadow-inner" />
-            {!isCollapsed && <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Junior</span>}
+            {currentUser?.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt="Profile Avatar"
+                className="w-7 h-7 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
+              />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center font-bold text-white text-[11px] shrink-0 shadow-inner">
+                {(currentUser?.name || userEmail || 'JG').substring(0, 2).toUpperCase()}
+              </div>
+            )}
+            {!isCollapsed && <span className={`font-semibold text-sm ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>{(currentUser?.name || userEmail?.split('@')[0] || 'Junior').split(' ')[0]}</span>}
           </div>
           {!isCollapsed && (
             <ChevronDown

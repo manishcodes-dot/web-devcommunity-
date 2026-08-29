@@ -2,8 +2,8 @@ import Article from '../models/Article.js';
 import ApiError from '../utils/ApiError.js';
 import { HTTP_STATUS } from '../constants/statusCodes.js';
 
-export const getArticles = async (query) => {
-  const { page = 1, limit = 10, category, search, featured } = query;
+export const getArticles = async (query, user = null) => {
+  const { page = 1, limit = 10, category, search, featured, myNotes } = query;
   const filter = {};
 
   if (category) {
@@ -14,11 +14,34 @@ export const getArticles = async (query) => {
     filter.isFeatured = featured === 'true';
   }
 
-  if (search) {
+  // Handle Public vs Private visibility based on authenticated user context
+  if (myNotes === 'true' && user) {
+    filter.author = user._id;
+  } else if (user) {
+    // Show all public articles PLUS private articles owned by current user
     filter.$or = [
+      { isPrivate: { $ne: true } },
+      { author: user._id }
+    ];
+  } else {
+    // Unauthenticated: show only public articles
+    filter.isPrivate = { $ne: true };
+  }
+
+  if (search) {
+    const searchFilter = [
       { title: { $regex: search, $options: 'i' } },
       { summary: { $regex: search, $options: 'i' } },
     ];
+    if (filter.$or) {
+      filter.$and = [
+        { $or: filter.$or },
+        { $or: searchFilter }
+      ];
+      delete filter.$or;
+    } else {
+      filter.$or = searchFilter;
+    }
   }
 
   const skip = (Number(page) - 1) * Number(limit);
@@ -68,9 +91,13 @@ export const getArticleByIdOrSlug = async (identifier) => {
 };
 
 export const createArticle = async (articleData, authorId) => {
+  const summary = articleData.summary || (articleData.content ? articleData.content.substring(0, 150) : '');
+
   const article = await Article.create({
     ...articleData,
+    summary,
     author: authorId,
+    isPrivate: Boolean(articleData.isPrivate),
   });
   return await article.populate([
     { path: 'author', select: 'name email avatar' },
@@ -85,7 +112,10 @@ export const updateArticle = async (id, updateData, user) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Article not found');
   }
 
-  if (article.author.toString() !== user._id.toString() && user.role !== 'admin') {
+  const authorIdStr = article.author?._id ? article.author._id.toString() : article.author?.toString();
+  const userIdStr = user?._id ? user._id.toString() : user?.toString();
+
+  if (authorIdStr !== userIdStr && user?.role !== 'admin') {
     throw new ApiError(HTTP_STATUS.FORBIDDEN, 'Not authorized to update this article');
   }
 
@@ -105,7 +135,10 @@ export const deleteArticle = async (id, user) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Article not found');
   }
 
-  if (article.author.toString() !== user._id.toString() && user.role !== 'admin') {
+  const authorIdStr = article.author?._id ? article.author._id.toString() : article.author?.toString();
+  const userIdStr = user?._id ? user._id.toString() : user?.toString();
+
+  if (authorIdStr !== userIdStr && user?.role !== 'admin') {
     throw new ApiError(HTTP_STATUS.FORBIDDEN, 'Not authorized to delete this article');
   }
 
