@@ -5,6 +5,7 @@ import {
   createArticle,
   updateArticle,
   deleteArticle,
+  toggleLikeArticle,
 } from '../controllers/articleController.js';
 import { getArticleComments, createComment } from '../controllers/commentController.js';
 import { protect, optionalProtect } from '../middleware/auth.js';
@@ -19,9 +20,11 @@ router
 
 router
   .route('/:id')
-  .get(getArticleByIdOrSlug)
+  .get(optionalProtect, getArticleByIdOrSlug)
   .put(protect, updateArticle)
   .delete(protect, deleteArticle);
+
+router.post('/:id/like', protect, toggleLikeArticle);
 
 // Nested comment routes
 router

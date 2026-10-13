@@ -15,3 +15,7 @@ export const createArticleApi = async (articleData) => {
 export const deleteArticleApi = async (id) => {
   return await axiosClient.delete(`/articles/${id}`);
 };
+
+export const toggleArticleLikeApi = async (id) => {
+  return await axiosClient.post(`/articles/${id}/like`);
+};

@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User,
   Mail,
-  Shield,
   Calendar,
   Edit3,
   FileText,
@@ -18,9 +16,11 @@ import {
 } from 'lucide-react';
 import { fetchArticlesApi, deleteArticleApi } from '@/services/articleService';
 import { updateUserProfileApi } from '@/services/userService';
+import { useAuth } from '@/context/AuthContext';
 
 export function UserProfileView({ currentUser, userEmail, isDarkMode = false, onBackToFeed }) {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [userNotes, setUserNotes] = useState([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [activeTab, setActiveTab] = useState('all'); // 'all' | 'public' | 'private'
@@ -33,13 +33,14 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  useEffect(() => {
-    if (currentUser) {
-      setEditName(currentUser.name || '');
-      setEditBio(currentUser.bio || '');
-      setEditAvatar(currentUser.avatar || '');
+  const toggleEditing = () => {
+    if (!isEditing) {
+      setEditName(currentUser?.name || userEmail?.split('@')[0] || '');
+      setEditBio(currentUser?.bio || '');
+      setEditAvatar(currentUser?.avatar || '');
     }
-  }, [currentUser]);
+    setIsEditing((prev) => !prev);
+  };
 
   // Load user articles
   useEffect(() => {
@@ -69,10 +70,12 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
         bio: editBio,
         avatar: editAvatar,
       });
-      if (currentUser) {
-        currentUser.name = editName;
-        currentUser.bio = editBio;
-        currentUser.avatar = editAvatar;
+      if (updateUser) {
+        updateUser({
+          name: editName,
+          bio: editBio,
+          avatar: editAvatar,
+        });
       }
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
@@ -202,7 +205,7 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
 
           {/* Edit Profile Button */}
           <button
-            onClick={() => setIsEditing(!isEditing)}
+            onClick={toggleEditing}
             className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border transition-colors cursor-pointer ${
               isEditing
                 ? 'bg-red-500/10 border-red-500/30 text-red-500 hover:bg-red-500/20'

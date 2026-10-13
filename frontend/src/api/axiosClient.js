@@ -23,8 +23,12 @@ axiosClient.interceptors.request.use(
 axiosClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    const message =
+    let message =
       error.response?.data?.message || error.message || 'An unexpected error occurred';
+    if (error.message === 'Network Error' || !error.response) {
+      message =
+        'Cannot connect to backend server at http://localhost:5000. Please ensure backend is running.';
+    }
     return Promise.reject(new Error(message));
   }
 );

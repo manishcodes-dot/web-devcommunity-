@@ -62,9 +62,6 @@ Desktop.ini
 frontend/src/assets/react.svg
 frontend/src/assets/vite.svg
 
-# Auth practice/demo components
-frontend/src/components/ui/auth-01.jsx
-frontend/src/components/ui/auth-02.jsx
 
 # ============================
 # Misc

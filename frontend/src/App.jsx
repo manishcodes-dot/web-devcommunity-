@@ -9,7 +9,7 @@ import { useAuth } from './context/AuthContext';
 
 function LoginPage({ isDarkMode }) {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, register } = useAuth();
   const [errorMsg, setErrorMsg] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -21,6 +21,24 @@ function LoginPage({ isDarkMode }) {
       navigate('/app');
     } catch (err) {
       setErrorMsg(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDemoBypass = async () => {
+    setErrorMsg('');
+    setIsSubmitting(true);
+    try {
+      await login('demo_user_test@example.com', 'Password123!');
+      navigate('/app');
+    } catch {
+      try {
+        await register('Demo User', 'demo_user_test@example.com', 'Password123!');
+        navigate('/app');
+      } catch (regErr) {
+        setErrorMsg(regErr.message || 'Quick login failed');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -41,6 +59,7 @@ function LoginPage({ isDarkMode }) {
         onBottomPromptClick={() => navigate('/signup')}
         onBackToHome={() => navigate('/')}
         onSubmit={(email, password) => handleLoginSubmit(email, password)}
+        onDemoLogin={handleDemoBypass}
         submitLabel={isSubmitting ? "Logging in..." : "Continue to workspace"}
         isDarkMode={isDarkMode}
       />

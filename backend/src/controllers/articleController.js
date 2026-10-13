@@ -9,8 +9,13 @@ export const getArticles = asyncHandler(async (req, res) => {
 });
 
 export const getArticleByIdOrSlug = asyncHandler(async (req, res) => {
-  const article = await articleService.getArticleByIdOrSlug(req.params.id);
+  const article = await articleService.getArticleByIdOrSlug(req.params.id, req.user);
   return new ApiResponse(HTTP_STATUS.OK, article, 'Article retrieved successfully').send(res);
+});
+
+export const toggleLikeArticle = asyncHandler(async (req, res) => {
+  const result = await articleService.toggleLikeArticle(req.params.id, req.user._id);
+  return new ApiResponse(HTTP_STATUS.OK, result, 'Article like updated successfully').send(res);
 });
 
 export const createArticle = asyncHandler(async (req, res) => {

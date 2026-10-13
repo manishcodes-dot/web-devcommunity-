@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect } from 'react';
 import { loginApi, registerApi, getCurrentUserApi } from '../services/authService';
 
@@ -7,6 +8,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
+
+  const logout = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+    setUser(null);
+  };
+
+  const updateUser = (updatedUserData) => {
+    setUser((prev) => (prev ? { ...prev, ...updatedUserData } : prev));
+  };
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -45,12 +56,6 @@ export const AuthProvider = ({ children }) => {
     return userData;
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -61,6 +66,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
       }}
     >
       {children}

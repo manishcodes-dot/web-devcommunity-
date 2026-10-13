@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   FaSearch,
@@ -20,12 +20,22 @@ import {
   FaLock,
   FaGlobe,
   FaTrash,
+  FaPaperPlane,
 } from "react-icons/fa";
 
+import { useAuth } from "@/context/AuthContext";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
-import PromptBar from "@/components/ui/prompt-bar";
 import AiChatBot from "@/components/ui/ai-chat-bot";
-import { fetchArticlesApi, deleteArticleApi } from "@/services/articleService";
+import {
+  fetchArticlesApi,
+  deleteArticleApi,
+  toggleArticleLikeApi,
+} from "@/services/articleService";
+import {
+  fetchArticleCommentsApi,
+  createCommentApi,
+  deleteCommentApi,
+} from "@/services/commentService";
 
 /**
  * INITIAL_ARTICLES
@@ -54,6 +64,9 @@ export function NewsHome({
   customNotes = [],
 }) {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
+  const activeUser = currentUser || authUser;
+
   const [articles, setArticles] = useState(INITIAL_ARTICLES);
   const [selectedCategory, setSelectedCategory] = useState("For You");
   const [searchQuery, setSearchQuery] = useState("");
@@ -65,6 +78,13 @@ export function NewsHome({
     setInternalIsDarkMode(typeof val === "function" ? val(isDarkMode) : val);
   const [followedWriters, setFollowedWriters] = useState({});
   const [openMenuId, setOpenMenuId] = useState(null);
+
+  // Comments state for currently selected article
+  const [comments, setComments] = useState([]);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [commentError, setCommentError] = useState("");
 
   // Close article options menu popover on click outside
   useEffect(() => {
@@ -95,9 +115,9 @@ export function NewsHome({
           authorId: art.author?._id || art.author?.id || art.author,
           authorAvatar: art.author?.avatar || '',
           publishedAt: art.createdAt ? new Date(art.createdAt).toLocaleDateString() : 'Recently',
-          claps: art.viewsCount || 0,
-          commentsCount: 0,
-          isLiked: false,
+          claps: art.likesCount ?? 0,
+          commentsCount: art.commentsCount ?? 0,
+          isLiked: Boolean(art.isLiked),
           isBookmarked: false,
         }));
         setArticles(formatted);
@@ -107,6 +127,218 @@ export function NewsHome({
     };
     loadBackendArticles();
   }, [myNotesOnly]);
+
+  const handleOpenArticle = (art) => {
+    setComments([]);
+    setCommentError("");
+    setSelectedArticle(art);
+  };
+
+  const handleBackToFeed = () => {
+    setComments([]);
+    setCommentError("");
+    setSelectedArticle(null);
+  };
+
+  // Fetch comments whenever a MongoDB article is opened
+  useEffect(() => {
+    const articleId = selectedArticle?.id;
+    if (!articleId || !/^[0-9a-fA-F]{24}$/.test(articleId)) {
+      return;
+    }
+
+    let isMounted = true;
+    const loadComments = async () => {
+      setIsLoadingComments(true);
+      try {
+        const response = await fetchArticleCommentsApi(articleId);
+        const commentList = response.data || [];
+        if (isMounted) {
+          setComments(Array.isArray(commentList) ? commentList : []);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error("Failed to load article comments:", err.message);
+          setCommentError("Could not load comments.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingComments(false);
+        }
+      }
+    };
+
+    loadComments();
+    return () => {
+      isMounted = false;
+    };
+  }, [selectedArticle?.id]);
+
+  // Add new comment
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim() || isSubmittingComment || !selectedArticle) return;
+
+    if (!activeUser) {
+      alert("Please sign in to join the discussion.");
+      navigate("/login");
+      return;
+    }
+
+    if (!/^[0-9a-fA-F]{24}$/.test(selectedArticle.id)) {
+      const localComment = {
+        _id: String(Date.now()),
+        content: newComment.trim(),
+        createdAt: new Date().toISOString(),
+        user: {
+          _id: activeUser?._id || "guest",
+          name: activeUser?.name || "Anonymous",
+          avatar: activeUser?.avatar || "",
+        },
+      };
+      setComments((prev) => [localComment, ...prev]);
+      setNewComment("");
+      setSelectedArticle((prev) => ({
+        ...prev,
+        commentsCount: (prev.commentsCount || 0) + 1,
+      }));
+      setArticles((prev) =>
+        prev.map((art) =>
+          art.id === selectedArticle.id
+            ? { ...art, commentsCount: (art.commentsCount || 0) + 1 }
+            : art
+        )
+      );
+      return;
+    }
+
+    setIsSubmittingComment(true);
+    setCommentError("");
+    try {
+      const response = await createCommentApi(selectedArticle.id, newComment.trim());
+      const createdComment = response.data;
+      setComments((prev) => [createdComment, ...prev]);
+      setNewComment("");
+      setSelectedArticle((prev) => ({
+        ...prev,
+        commentsCount: (prev.commentsCount || 0) + 1,
+      }));
+      setArticles((prev) =>
+        prev.map((art) =>
+          art.id === selectedArticle.id
+            ? { ...art, commentsCount: (art.commentsCount || 0) + 1 }
+            : art
+        )
+      );
+    } catch (err) {
+      console.error("Failed to post comment:", err.message);
+      setCommentError(err.message || "Failed to post comment");
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  // Delete comment
+  const handleDeleteComment = async (commentId) => {
+    if (!window.confirm("Are you sure you want to delete this comment?")) return;
+    try {
+      await deleteCommentApi(commentId);
+      setComments((prev) => prev.filter((c) => (c._id || c.id) !== commentId));
+      setSelectedArticle((prev) => ({
+        ...prev,
+        commentsCount: Math.max(0, (prev.commentsCount || 1) - 1),
+      }));
+      setArticles((prev) =>
+        prev.map((art) =>
+          art.id === selectedArticle.id
+            ? { ...art, commentsCount: Math.max(0, (art.commentsCount || 1) - 1) }
+            : art
+        )
+      );
+    } catch (err) {
+      console.error("Failed to delete comment:", err.message);
+      alert(err.message || "Could not delete comment");
+    }
+  };
+
+  // Real MongoDB Like handler with optimistic UI updates
+  const toggleLike = async (id, e) => {
+    if (e) e.stopPropagation();
+
+    if (!activeUser) {
+      alert("Please sign in to like articles.");
+      navigate("/login");
+      return;
+    }
+
+    // Optimistic toggle
+    setArticles((prev) =>
+      prev.map((art) =>
+        art.id === id
+          ? {
+              ...art,
+              claps: art.isLiked ? Math.max(0, art.claps - 1) : art.claps + 1,
+              isLiked: !art.isLiked,
+            }
+          : art
+      )
+    );
+    if (selectedArticle && selectedArticle.id === id) {
+      setSelectedArticle((prev) => ({
+        ...prev,
+        claps: prev.isLiked ? Math.max(0, prev.claps - 1) : prev.claps + 1,
+        isLiked: !prev.isLiked,
+      }));
+    }
+
+    if (/^[0-9a-fA-F]{24}$/.test(id)) {
+      try {
+        const response = await toggleArticleLikeApi(id);
+        const result = response.data;
+        if (result && typeof result.likesCount === "number") {
+          setArticles((prev) =>
+            prev.map((art) =>
+              art.id === id
+                ? {
+                    ...art,
+                    claps: result.likesCount,
+                    isLiked: result.isLiked,
+                  }
+                : art
+            )
+          );
+          if (selectedArticle && selectedArticle.id === id) {
+            setSelectedArticle((prev) => ({
+              ...prev,
+              claps: result.likesCount,
+              isLiked: result.isLiked,
+            }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to sync like with backend:", err.message);
+        // Rollback optimistic update
+        setArticles((prev) =>
+          prev.map((art) =>
+            art.id === id
+              ? {
+                  ...art,
+                  claps: art.isLiked ? Math.max(0, art.claps - 1) : art.claps + 1,
+                  isLiked: !art.isLiked,
+                }
+              : art
+          )
+        );
+        if (selectedArticle && selectedArticle.id === id) {
+          setSelectedArticle((prev) => ({
+            ...prev,
+            claps: prev.isLiked ? Math.max(0, prev.claps - 1) : prev.claps + 1,
+            isLiked: !prev.isLiked,
+          }));
+        }
+      }
+    }
+  };
 
   // Article creation state
   const [internalIsCreateOpen, setInternalIsCreateOpen] = useState(false);
@@ -154,28 +386,6 @@ export function NewsHome({
     setNewIsPrivate(false);
   };
 
-  // Clap / Like handler
-  const toggleLike = (id, e) => {
-    if (e) e.stopPropagation();
-    setArticles((prev) =>
-      prev.map((art) =>
-        art.id === id
-          ? {
-              ...art,
-              claps: art.isLiked ? art.claps - 1 : art.claps + 1,
-              isLiked: !art.isLiked,
-            }
-          : art
-      )
-    );
-    if (selectedArticle && selectedArticle.id === id) {
-      setSelectedArticle((prev) => ({
-        ...prev,
-        claps: prev.isLiked ? prev.claps - 1 : prev.claps + 1,
-        isLiked: !prev.isLiked,
-      }));
-    }
-  };
 
   // Bookmark handler
   const toggleBookmark = (id, e) => {
@@ -357,7 +567,7 @@ export function NewsHome({
             <div className="flex items-center justify-between pb-4 border-b border-slate-200/60 dark:border-zinc-800/60">
               <button
                 type="button"
-                onClick={() => setSelectedArticle(null)}
+                onClick={handleBackToFeed}
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                   isDarkMode
                     ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
@@ -446,6 +656,259 @@ export function NewsHome({
               <div className="pt-2 text-base sm:text-lg leading-relaxed whitespace-pre-line font-normal text-slate-700 dark:text-zinc-300">
                 {selectedArticle.content}
               </div>
+
+              {/* Engagement Reaction Bar */}
+              <div
+                className={`flex items-center justify-between py-4 my-8 border-y ${
+                  isDarkMode
+                    ? "border-zinc-800 text-zinc-300"
+                    : "border-slate-200 text-slate-700"
+                }`}
+              >
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <button
+                    type="button"
+                    onClick={(e) => toggleLike(selectedArticle.id, e)}
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                      selectedArticle.isLiked
+                        ? "bg-red-500/10 text-red-500 border border-red-500/30 shadow-xs"
+                        : isDarkMode
+                        ? "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60"
+                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-xs"
+                    }`}
+                  >
+                    {selectedArticle.isLiked ? (
+                      <FaHeart className="h-4 w-4 text-red-500 animate-pulse" />
+                    ) : (
+                      <FaRegHeart className="h-4 w-4" />
+                    )}
+                    <span>
+                      {selectedArticle.claps} {selectedArticle.claps === 1 ? "like" : "likes"}
+                    </span>
+                  </button>
+
+                  <div
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-xs sm:text-sm font-bold ${
+                      isDarkMode
+                        ? "bg-zinc-800/80 text-zinc-400 border border-zinc-700/60"
+                        : "bg-slate-100 text-slate-600 border border-slate-200"
+                    }`}
+                  >
+                    <FaRegComment className="h-4 w-4" />
+                    <span>
+                      {comments.length} {comments.length === 1 ? "comment" : "comments"}
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => toggleBookmark(selectedArticle.id, e)}
+                  className={`p-2.5 rounded-2xl border transition-colors cursor-pointer ${
+                    selectedArticle.isBookmarked
+                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                      : isDarkMode
+                      ? "border-zinc-800 text-zinc-400 hover:text-white"
+                      : "border-slate-200 text-slate-600 hover:text-slate-900"
+                  }`}
+                  title={selectedArticle.isBookmarked ? "Remove bookmark" : "Bookmark article"}
+                >
+                  {selectedArticle.isBookmarked ? (
+                    <FaBookmark className="h-4 w-4 text-emerald-500" />
+                  ) : (
+                    <FaRegBookmark className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* Discussion & Comments Thread */}
+              <section className="space-y-6 pt-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
+                    Responses ({comments.length})
+                  </h3>
+                </div>
+
+                {/* Comment Input Form */}
+                {activeUser ? (
+                  <form
+                    onSubmit={handleAddComment}
+                    className={`rounded-3xl border p-5 transition-all space-y-3 ${
+                      isDarkMode
+                        ? "bg-[#18181b] border-zinc-800 focus-within:border-emerald-500/60 shadow-lg"
+                        : "bg-white border-slate-200 focus-within:border-emerald-500/60 shadow-xs"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3.5">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                        {(activeUser?.name || "You").substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="flex-1 space-y-3">
+                        <textarea
+                          rows={3}
+                          value={newComment}
+                          onChange={(e) => setNewComment(e.target.value)}
+                          placeholder="What are your thoughts? Join the conversation..."
+                          className={`w-full bg-transparent resize-none text-sm outline-none placeholder:text-xs sm:placeholder:text-sm ${
+                            isDarkMode
+                              ? "text-white placeholder-zinc-500"
+                              : "text-slate-900 placeholder-slate-400"
+                          }`}
+                        />
+                        {commentError && (
+                          <p className="text-xs text-red-500 font-medium">{commentError}</p>
+                        )}
+                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800/80">
+                          <span
+                            className={`text-[11px] ${
+                              isDarkMode ? "text-zinc-500" : "text-slate-400"
+                            }`}
+                          >
+                            Sharing as{" "}
+                            <span className="font-semibold text-emerald-500">
+                              {activeUser?.name || activeUser?.email}
+                            </span>
+                          </span>
+                          <button
+                            type="submit"
+                            disabled={!newComment.trim() || isSubmittingComment}
+                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm active:scale-95"
+                          >
+                            <FaPaperPlane className="h-3 w-3" />
+                            <span>{isSubmittingComment ? "Posting..." : "Respond"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                ) : (
+                  <div
+                    className={`rounded-3xl border p-6 text-center space-y-3 ${
+                      isDarkMode
+                        ? "bg-[#18181b] border-zinc-800 text-zinc-400"
+                        : "bg-white border-slate-200 text-slate-600 shadow-xs"
+                    }`}
+                  >
+                    <p className="text-sm font-medium">
+                      Sign in to join the discussion and share your thoughts.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => navigate("/login")}
+                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer shadow-xs"
+                    >
+                      Sign In to Comment
+                    </button>
+                  </div>
+                )}
+
+                {/* Comments List */}
+                <div className="space-y-3 pt-2">
+                  {isLoadingComments ? (
+                    <div
+                      className={`p-8 text-center text-xs font-medium ${
+                        isDarkMode ? "text-zinc-500" : "text-slate-400"
+                      }`}
+                    >
+                      Loading responses...
+                    </div>
+                  ) : comments.length === 0 ? (
+                    <div
+                      className={`p-8 rounded-3xl border text-center text-xs sm:text-sm font-medium ${
+                        isDarkMode
+                          ? "bg-[#18181b]/50 border-zinc-800/60 text-zinc-500"
+                          : "bg-slate-50 border-slate-200/60 text-slate-400"
+                      }`}
+                    >
+                      There are no responses yet. Be the first to share your thoughts!
+                    </div>
+                  ) : (
+                    comments.map((c) => {
+                      const commentAuthorId =
+                        c.user?._id?.toString() ||
+                        c.user?.id?.toString() ||
+                        c.user?.toString();
+                      const currentUserId =
+                        activeUser?._id?.toString() ||
+                        activeUser?.id?.toString();
+                      const isCommentAuthor =
+                        activeUser &&
+                        (commentAuthorId === currentUserId ||
+                          activeUser.role === "admin");
+
+                      return (
+                        <div
+                          key={c._id || c.id}
+                          className={`rounded-2xl border p-4 sm:p-5 space-y-3 transition-colors ${
+                            isDarkMode
+                              ? "bg-[#18181b] border-zinc-800/80"
+                              : "bg-white border-slate-200/80 shadow-2xs"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              {c.user?.avatar &&
+                              typeof c.user.avatar === "string" &&
+                              c.user.avatar.startsWith("http") ? (
+                                <img
+                                  src={c.user.avatar}
+                                  alt={c.user?.name || "User"}
+                                  className="h-8 w-8 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
+                                />
+                              ) : (
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                                  {(c.user?.name || "User").substring(0, 2).toUpperCase()}
+                                </div>
+                              )}
+                              <div>
+                                <h5 className="font-semibold text-xs sm:text-sm">
+                                  {c.user?.name || "Anonymous User"}
+                                </h5>
+                                <span
+                                  className={`text-[11px] ${
+                                    isDarkMode ? "text-zinc-500" : "text-slate-400"
+                                  }`}
+                                >
+                                  {c.createdAt
+                                    ? new Date(c.createdAt).toLocaleDateString(undefined, {
+                                        month: "short",
+                                        day: "numeric",
+                                        year: "numeric",
+                                      })
+                                    : "Recently"}
+                                </span>
+                              </div>
+                            </div>
+
+                            {isCommentAuthor && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteComment(c._id || c.id)}
+                                title="Delete response"
+                                className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
+                                  isDarkMode
+                                    ? "text-zinc-500 hover:text-red-400 hover:bg-zinc-800"
+                                    : "text-slate-400 hover:text-red-500 hover:bg-slate-100"
+                                }`}
+                              >
+                                <FaTrash className="h-3 w-3" />
+                              </button>
+                            )}
+                          </div>
+
+                          <p
+                            className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
+                              isDarkMode ? "text-zinc-300" : "text-slate-700"
+                            }`}
+                          >
+                            {c.content}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </section>
             </div>
           </div>
         ) : (
@@ -542,7 +1005,7 @@ export function NewsHome({
                 filteredArticles.map((art) => (
                   <article
                     key={art.id}
-                    onClick={() => setSelectedArticle(art)}
+                    onClick={() => handleOpenArticle(art)}
                     className={`rounded-3xl border p-6 space-y-4 cursor-pointer ${
                       isDarkMode
                         ? "bg-[#18181b] border-zinc-800/80 text-zinc-200 shadow-md"
@@ -639,14 +1102,19 @@ export function NewsHome({
                       }`}
                     >
                       <div className="flex items-center gap-5">
-                        <span className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={(e) => toggleLike(art.id, e)}
+                          className="flex items-center gap-1.5 hover:text-red-500 transition-colors cursor-pointer group"
+                          title="Like note"
+                        >
                           {art.isLiked ? (
-                            <FaHeart className="h-3.5 w-3.5 text-red-500" />
+                            <FaHeart className="h-3.5 w-3.5 text-red-500 group-hover:scale-110 transition-transform" />
                           ) : (
-                            <FaRegHeart className="h-3.5 w-3.5" />
+                            <FaRegHeart className="h-3.5 w-3.5 group-hover:scale-110 transition-transform" />
                           )}
                           <span>{art.claps}</span>
-                        </span>
+                        </button>
 
                         <span className="flex items-center gap-1.5">
                           <FaRegComment className="h-3.5 w-3.5" />
@@ -764,13 +1232,11 @@ export function NewsHome({
 
                               <div className="my-1 border-t border-slate-200/60 dark:border-zinc-800/60" />
 
-                              {Boolean(
-                                currentUser && (
-                                  (art.authorId && (art.authorId === currentUser._id || art.authorId === currentUser.id || String(art.authorId) === String(currentUser._id))) ||
-                                  (art.authorEmail && currentUser.email && art.authorEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
-                                  (art.author && currentUser.name && art.author.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
-                                )
-                              ) ? (
+                              {(currentUser && (
+                                (art.authorId && (art.authorId === currentUser._id || art.authorId === currentUser.id || String(art.authorId) === String(currentUser._id))) ||
+                                (art.authorEmail && currentUser.email && art.authorEmail.toLowerCase() === currentUser.email.toLowerCase()) ||
+                                (art.author && currentUser.name && art.author.trim().toLowerCase() === currentUser.name.trim().toLowerCase())
+                              )) ? (
                                 <button
                                   type="button"
                                   onClick={async (e) => {

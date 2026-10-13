@@ -1,4 +1,5 @@
 import Article from '../models/Article.js';
+import Comment from '../models/Comment.js';
 import ApiError from '../utils/ApiError.js';
 import { HTTP_STATUS } from '../constants/statusCodes.js';
 
@@ -56,8 +57,32 @@ export const getArticles = async (query, user = null) => {
     Article.countDocuments(filter),
   ]);
 
+  const articleIds = articles.map((a) => a._id);
+  const commentCounts = await Comment.aggregate([
+    { $match: { article: { $in: articleIds } } },
+    { $group: { _id: '$article', count: { $sum: 1 } } },
+  ]);
+  const commentCountMap = {};
+  commentCounts.forEach((c) => {
+    commentCountMap[c._id.toString()] = c.count;
+  });
+
+  const formattedArticles = articles.map((art) => {
+    const doc = art.toObject ? art.toObject() : art;
+    const likes = doc.likes || [];
+    const isLiked = Boolean(
+      user && likes.some((id) => id.toString() === user._id.toString())
+    );
+    return {
+      ...doc,
+      likesCount: likes.length,
+      isLiked,
+      commentsCount: commentCountMap[doc._id.toString()] || 0,
+    };
+  });
+
   return {
-    articles,
+    articles: formattedArticles,
     pagination: {
       total,
       page: Number(page),
@@ -67,7 +92,7 @@ export const getArticles = async (query, user = null) => {
   };
 };
 
-export const getArticleByIdOrSlug = async (identifier) => {
+export const getArticleByIdOrSlug = async (identifier, user = null) => {
   let article;
   if (identifier.match(/^[0-9a-fA-F]{24}$/)) {
     article = await Article.findById(identifier)
@@ -83,22 +108,90 @@ export const getArticleByIdOrSlug = async (identifier) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Article not found');
   }
 
+  // Privacy protection check
+  if (article.isPrivate) {
+    const authorIdStr = article.author?._id
+      ? article.author._id.toString()
+      : article.author?.toString();
+    const userIdStr = user?._id
+      ? user._id.toString()
+      : user?.id?.toString() || user?.toString();
+    if (!user || (authorIdStr !== userIdStr && user.role !== 'admin')) {
+      throw new ApiError(
+        HTTP_STATUS.FORBIDDEN,
+        'You are not authorized to view this private note'
+      );
+    }
+  }
+
   // Increment views count
   article.viewsCount += 1;
   await article.save();
 
-  return article;
+  const commentsCount = await Comment.countDocuments({ article: article._id });
+
+  const doc = article.toObject();
+  const likes = doc.likes || [];
+  const isLiked = Boolean(
+    user && likes.some((id) => id.toString() === user._id.toString())
+  );
+
+  return {
+    ...doc,
+    likesCount: likes.length,
+    isLiked,
+    commentsCount,
+  };
+};
+
+export const toggleLikeArticle = async (articleId, userId) => {
+  const article = await Article.findById(articleId);
+  if (!article) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Article not found');
+  }
+
+  if (!article.likes) {
+    article.likes = [];
+  }
+
+  const userIdStr = userId.toString();
+  const existingIndex = article.likes.findIndex((id) => id.toString() === userIdStr);
+
+  let isLiked = false;
+  if (existingIndex > -1) {
+    article.likes.splice(existingIndex, 1);
+    isLiked = false;
+  } else {
+    article.likes.push(userId);
+    isLiked = true;
+  }
+
+  await article.save();
+
+  return {
+    id: article._id,
+    isLiked,
+    likesCount: article.likes.length,
+  };
 };
 
 export const createArticle = async (articleData, authorId) => {
-  const summary = articleData.summary || (articleData.content ? articleData.content.substring(0, 150) : '');
+  const summary =
+    articleData.summary ||
+    (articleData.content ? articleData.content.substring(0, 150) : '');
 
-  const article = await Article.create({
+  const payload = {
     ...articleData,
     summary,
     author: authorId,
     isPrivate: Boolean(articleData.isPrivate),
-  });
+  };
+
+  if (!payload.category || (typeof payload.category === 'string' && payload.category.trim() === '')) {
+    delete payload.category;
+  }
+
+  const article = await Article.create(payload);
   return await article.populate([
     { path: 'author', select: 'name email avatar' },
     { path: 'category', select: 'name slug' },
