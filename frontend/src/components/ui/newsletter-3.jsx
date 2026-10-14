@@ -6,27 +6,29 @@ import { ShimmerButton } from '@/components/ui/shimmer-button';
 import PromptBar from '@/components/ui/prompt-bar';
 
 export const Newsletter3 = ({
-  badgeText = 'Get Started',
-  heading = 'Get the latest, stay inspired',
-  description = 'Join for design tips, fresh releases, and smarter ways to elevate your work.',
+  badgeText = '✦ Developer Community',
+  heading = "Discover what you didn't know. Share what you do.",
+  description = "Explore deep technical notes, solve tricky bugs, and share your knowledge.",
   buttonText = 'Get started for free',
   ctaHref = '#',
   onCtaClick,
-  subtext = 'No credit card required • Instant access',
+  onSendPrompt,
+  onSelectTag,
+  subtext = 'Free forever • No credit card required • Instant access',
   isDarkMode = false,
 }) => {
   return (
-    <section className={`relative flex min-h-screen w-full items-center justify-center overflow-hidden transition-colors duration-300 ${
+    <section className={`relative flex flex-col flex-1 w-full items-center justify-center overflow-hidden transition-colors duration-300 ${
       isDarkMode ? 'bg-[#222831] text-[#eeeeee]' : 'bg-[#eeeeee] text-[#222831]'
-    } py-16 md:py-24`}>
+    } py-12 md:py-16`}>
       {/* Background Particles */}
       <div className="absolute inset-0 z-0 h-full w-full">
         <Particles
           particleColors={isDarkMode ? ["#2FA084", "#eeeeee", "#393e46"] : ["#2FA084", "#222831", "#393e46"]}
-          particleCount={250}
+          particleCount={220}
           particleSpread={12}
           speed={0.15}
-          particleBaseSize={100}
+          particleBaseSize={90}
           moveParticlesOnHover={true}
           alphaParticles={true}
           disableRotation={false}
@@ -49,27 +51,38 @@ export const Newsletter3 = ({
 
       <div className="relative z-10 container mx-auto flex max-w-3xl flex-col items-center px-4 text-center md:px-6">
         {badgeText && (
-          <Badge className="border-none px-4 mb-4 rounded-full py-1.5 text-xs font-bold transition-colors shadow-sm bg-[#2FA084] text-white hover:bg-[#268068]">
+          <Badge className="border-none px-3.5 mb-3 rounded-full py-1 text-xs font-semibold tracking-wide transition-colors shadow-xs bg-[#2FA084] text-white hover:bg-[#268068]">
             {badgeText}
           </Badge>
         )}
 
-        <h2 className={`mb-6 text-4xl font-bold tracking-tight md:text-6xl lg:text-7xl leading-tight ${
+        <h1 className={`mb-4 text-4xl font-extrabold tracking-tight md:text-6xl lg:text-7xl leading-[1.1] ${
           isDarkMode ? 'text-[#eeeeee]' : 'text-[#222831]'
         }`}>
           {heading}
-        </h2>
+        </h1>
 
-        <p className={`mb-10 max-w-xl text-base leading-relaxed md:text-lg lg:text-xl font-normal ${
+        <p className={`mb-8 max-w-lg text-base leading-relaxed md:text-lg font-normal ${
           isDarkMode ? 'text-[#eeeeee]/80' : 'text-[#393e46]'
         }`}>
           {description}
         </p>
 
-        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6">
-          <PromptBar onSend={(prompt, mode) => alert(`Sending prompt (${mode}): ${prompt}`)} />
+        <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-4">
+          <PromptBar
+            onSend={(prompt, mode) => {
+              if (onSendPrompt) {
+                onSendPrompt(prompt, mode);
+              } else if (onCtaClick) {
+                onCtaClick();
+              }
+            }}
+            onAttach={() => window.location.assign('/create')}
+            isDarkMode={isDarkMode}
+            placeholder="Search tech notes, ask a dev question, or explore..."
+          />
 
-          <a href={ctaHref} onClick={onCtaClick} className="no-underline mt-2">
+          <a href={ctaHref} onClick={onCtaClick} className="no-underline mt-1">
             <ShimmerButton
               shimmerColor="#ffffff"
               shimmerSize="0.18em"
@@ -77,22 +90,48 @@ export const Newsletter3 = ({
               borderRadius="9999px"
               background="#2FA084"
               spread="140deg"
-              className="px-9 py-4 shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer text-white"
+              className="px-8 py-3.5 shadow-lg transition-all duration-300 hover:scale-105 cursor-pointer text-white"
             >
-              <span className="flex items-center justify-center gap-3 text-center text-lg font-bold leading-none tracking-tight md:text-xl text-white">
+              <span className="flex items-center justify-center gap-2.5 text-center text-base font-bold leading-none tracking-tight md:text-lg text-white">
                 {buttonText}
-                <ArrowUpRight className="h-6 w-6 stroke-[2.5]" />
+                <ArrowUpRight className="h-5 w-5 stroke-[2.5]" />
               </span>
             </ShimmerButton>
           </a>
 
           {subtext && (
-            <p className={`text-sm md:text-base font-medium mt-1 ${
+            <p className={`text-xs md:text-sm font-medium ${
               isDarkMode ? 'text-zinc-400' : 'text-slate-500'
             }`}>
               {subtext}
             </p>
           )}
+
+          {/* Minimal Trending Dev Community Topics */}
+          <div className="flex flex-wrap items-center justify-center gap-1.5 pt-1">
+            <span className={`text-[11px] font-semibold uppercase tracking-wider ${
+              isDarkMode ? 'text-zinc-500' : 'text-slate-400'
+            }`}>
+              Popular:
+            </span>
+            {['#javascript', '#react', '#nodejs', '#architecture', '#ai'].map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => {
+                  if (onSelectTag) onSelectTag(tag);
+                  else if (onCtaClick) onCtaClick();
+                }}
+                className={`rounded-full px-2.5 py-0.5 text-xs font-mono font-medium transition-all duration-150 cursor-pointer ${
+                  isDarkMode
+                    ? 'bg-zinc-800/80 text-zinc-300 hover:bg-emerald-500/20 hover:text-emerald-400'
+                    : 'bg-white/80 text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200/60 shadow-xs'
+                }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -100,4 +139,3 @@ export const Newsletter3 = ({
 };
 
 export default Newsletter3;
-

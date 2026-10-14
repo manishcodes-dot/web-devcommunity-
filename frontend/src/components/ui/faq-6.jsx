@@ -11,28 +11,28 @@ import { cn } from '@/lib/utils';
 const defaultFaqs = [
   {
     id: 'faq-1',
-    question: 'How do I start sending money with the platform?',
-    answer: 'Simply create an account, verify your identity, link your preferred payment method, and you can start transferring funds globally instantly.'
+    question: 'What is OVERSTACK?',
+    answer: 'OVERSTACK is an open community publishing platform designed for developers, engineers, and curious builders. Just like Medium and DEV Community, it allows anyone to discover deep technical details they didn’t know and share their knowledge with the global tech ecosystem.'
   },
   {
     id: 'faq-2',
-    question: 'What are the transaction fees and currency conversion rates?',
-    answer: 'We provide real-time mid-market exchange rates with transparent low transaction fees displayed before you confirm any transfer.'
+    question: 'Is reading and publishing articles completely free?',
+    answer: 'Yes! Reading articles, saving bookmarks, following creators, and publishing your own developer notes is 100% free. There are no paywalls or gated reads.'
   },
   {
     id: 'faq-3',
-    question: 'Is my personal and financial information secure?',
-    answer: 'Yes, all sensitive data is encrypted using bank-grade AES-256 encryption. We utilize automated fraud detection and 24/7 continuous monitoring.'
+    question: 'What kind of technical topics can I write about?',
+    answer: 'From production post-mortems and obscure framework bugs to full architectural breakdowns (React, Go, Rust, Node, AI/ML, DevOps), you can write about any engineering topic, lesson learned, or tutorial.'
   },
   {
     id: 'faq-4',
-    question: 'How fast will the receiver get the money?',
-    answer: 'Over 90% of transfers arrive in less than 1.5 seconds. Speed depends slightly on the destination country and recipient bank.'
+    question: 'How do following authors and saved posts work?',
+    answer: 'When you follow a writer, they appear in your sidebar Following list so you never miss their new publications. You can also bookmark any article to your Saved Posts library to access it instantly later.'
   },
   {
     id: 'faq-5',
-    question: 'What support channels are available if I have an issue?',
-    answer: 'Our customer support team is available 24/7 via live chat, email, or direct phone support within your account dashboard.'
+    question: 'Can I cross-post from my personal blog or Medium?',
+    answer: 'Absolutely. You retain 100% copyright and ownership of all your content. You can publish original technical notes or cross-post articles from Medium, Substack, or your personal blog.'
   }
 ];
 

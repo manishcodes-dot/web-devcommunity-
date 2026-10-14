@@ -18,7 +18,7 @@ export function AttachmentButton({ onAttach, isDarkMode = false }) {
   );
 }
 
-export function PromptTextarea({ value, onChange, onSubmit, isDarkMode = false, placeholder = "How can I help you today?" }) {
+export function PromptTextarea({ value, onChange, onSubmit, isDarkMode = false, placeholder = "Search tech notes, ask a dev question, or explore topics..." }) {
   const textareaRef = useRef(null);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export function PromptTextarea({ value, onChange, onSubmit, isDarkMode = false, 
       onKeyDown={handleKeyDown}
       placeholder={placeholder}
       rows={1}
-      aria-label="AI Prompt Input"
+      aria-label="Community Search or Question Input"
       className={`w-full resize-none bg-transparent px-2 py-1 text-sm sm:text-base focus:outline-none focus:ring-0 border-none max-h-[140px] leading-relaxed font-sans ${
         isDarkMode
           ? "text-zinc-100 placeholder:text-zinc-500"
@@ -58,7 +58,7 @@ export function PromptTextarea({ value, onChange, onSubmit, isDarkMode = false, 
 
 export function ModeSelector({ mode, onSelectMode, isDarkMode = false }) {
   const [isOpen, setIsOpen] = useState(false);
-  const options = ["Auto", "GPT-4o", "Claude 3.5", "Perplexity"];
+  const options = ["Explore All", "Architecture", "Debugging", "Frontend", "Backend", "AI & Tools"];
   const selectorRef = useRef(null);
 
   useEffect(() => {
@@ -161,15 +161,42 @@ export function SendButton({ isActive, onClick, isDarkMode = false }) {
   );
 }
 
-export function PromptBar({ onSend, className = "", isDarkMode = false, placeholder }) {
+export function PromptBar({ onSend, onAttach, className = "", isDarkMode = false, placeholder }) {
   const [promptText, setPromptText] = useState("");
-  const [selectedMode, setSelectedMode] = useState("Auto");
+  const [selectedMode, setSelectedMode] = useState("Explore All");
   const [isFocused, setIsFocused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
 
   const handleSend = () => {
     if (promptText.trim()) {
       if (onSend) onSend(promptText, selectedMode);
       setPromptText("");
+    }
+  };
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input is not supported in this browser. Please type your query directly.");
+      return;
+    }
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'en-US';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      setIsListening(true);
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setPromptText((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setIsListening(false);
+      };
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+      recognition.start();
+    } catch {
+      setIsListening(false);
     }
   };
 
@@ -195,7 +222,10 @@ export function PromptBar({ onSend, className = "", isDarkMode = false, placehol
             }`
       } ${className}`}
     >
-      <AttachmentButton onAttach={() => alert("Attachment clicked")} isDarkMode={isDarkMode} />
+      <AttachmentButton
+        onAttach={onAttach || (() => window.location.assign('/create'))}
+        isDarkMode={isDarkMode}
+      />
       
       <div className="flex-1 min-w-0">
         <PromptTextarea
@@ -203,13 +233,13 @@ export function PromptBar({ onSend, className = "", isDarkMode = false, placehol
           onChange={setPromptText}
           onSubmit={handleSend}
           isDarkMode={isDarkMode}
-          placeholder={placeholder}
+          placeholder={placeholder || (isListening ? "Listening to your voice..." : undefined)}
         />
       </div>
 
       <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
         <ModeSelector mode={selectedMode} onSelectMode={setSelectedMode} isDarkMode={isDarkMode} />
-        <VoiceButton onVoiceClick={() => alert("Voice clicked")} isDarkMode={isDarkMode} />
+        <VoiceButton onVoiceClick={handleVoiceInput} isDarkMode={isDarkMode} />
         <SendButton isActive={promptText.trim().length > 0} onClick={handleSend} isDarkMode={isDarkMode} />
       </div>
     </div>
