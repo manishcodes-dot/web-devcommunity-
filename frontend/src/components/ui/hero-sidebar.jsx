@@ -1,23 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Search,
-  Home,
-  Compass,
   Bookmark,
-  Bell,
-  Globe,
-  Lock,
   FileText,
   Users,
-  Plus,
   ChevronDown,
   Settings,
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
-  X,
   Moon,
-  Sun
+  Sun,
+  Code2,
+  Terminal,
+  MessagesSquare,
+  Rocket,
+  Zap
 } from 'lucide-react'
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 
@@ -43,11 +41,48 @@ export function HeroSidebar({
   }
 
   const [currentActive, setCurrentActive] = useState(activeItem)
-  const [isLibraryOpen, setIsLibraryOpen] = useState(true)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const profileRef = useRef(null)
+
+  // Followed developers state
+  const [followedDevs, setFollowedDevs] = useState(() => {
+    try {
+      const saved = localStorage.getItem('overstack_followed_users');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter((d) => d.isFollowing);
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return [
+      { id: 'dev-sarah', name: 'Sarah Chen', handle: 'sarah_frontend', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80' },
+      { id: 'dev-marcus', name: 'Marcus Vance', handle: 'marcus_dist', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80' },
+      { id: 'dev-elena', name: 'Elena Rostova', handle: 'elena_ai', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80' },
+    ];
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      try {
+        const saved = localStorage.getItem('overstack_followed_users');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setFollowedDevs(parsed.filter((d) => d.isFollowing));
+          }
+        }
+      } catch {
+        // ignore
+      }
+    };
+    window.addEventListener('following_updated', handleUpdate);
+    return () => window.removeEventListener('following_updated', handleUpdate);
+  }, []);
 
   // Listen for outside click to close profile popover
   useEffect(() => {
@@ -98,13 +133,18 @@ export function HeroSidebar({
         {/* Brand Header & Sidebar Collapse Button */}
         <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-3' : 'justify-between'} px-1 py-1.5`}>
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-emerald-500 flex items-center justify-center font-bold text-white text-sm shadow-sm shadow-emerald-500/30 flex-shrink-0">
-              H
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center font-mono font-black text-white text-xs shadow-md shadow-emerald-500/25 flex-shrink-0 tracking-tighter">
+              &lt;/&gt;
             </div>
             {!isCollapsed && (
-              <span className={`font-bold text-base tracking-tight truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                HeroUI Labs
-              </span>
+              <div className="flex flex-col">
+                <span className={`font-black text-base tracking-tight truncate leading-none ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  OVERSTACK
+                </span>
+                <span className="text-[10px] font-mono tracking-wider font-bold text-emerald-500 uppercase mt-0.5">
+                  DEV COMMUNITY
+                </span>
+              </div>
             )}
           </div>
 
@@ -128,10 +168,10 @@ export function HeroSidebar({
 
         {/* Main Nav Items */}
         <nav className="space-y-1">
-          {/* Home */}
+          {/* Dev Feed */}
           <button
             onClick={() => handleNavClick('Home')}
-            title="Home"
+            title="Dev Feed"
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
               currentActive === 'Home'
                 ? isDarkMode
@@ -142,14 +182,68 @@ export function HeroSidebar({
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
             }`}
           >
-            <Home className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span>Home</span>}
+            <Terminal className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            {!isCollapsed && <span>Dev Feed</span>}
           </button>
 
-          {/* My Notes */}
+          {/* Discussions */}
+          <button
+            onClick={() => handleNavClick('Discussions')}
+            title="Discussions"
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
+              currentActive === 'Discussions'
+                ? isDarkMode
+                  ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
+                  : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
+                : isDarkMode
+                  ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+            }`}
+          >
+            <MessagesSquare className="w-4 h-4 flex-shrink-0 text-blue-400" />
+            {!isCollapsed && <span>Discussions</span>}
+          </button>
+
+          {/* Code Snippets */}
+          <button
+            onClick={() => handleNavClick('Code Snippets')}
+            title="Code Snippets"
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
+              currentActive === 'Code Snippets'
+                ? isDarkMode
+                  ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
+                  : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
+                : isDarkMode
+                  ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+            }`}
+          >
+            <Code2 className="w-4 h-4 flex-shrink-0 text-amber-400" />
+            {!isCollapsed && <span>Code Snippets</span>}
+          </button>
+
+          {/* #showdev */}
+          <button
+            onClick={() => handleNavClick('#showdev')}
+            title="#showdev Showcase"
+            className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
+              currentActive === '#showdev'
+                ? isDarkMode
+                  ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
+                  : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
+                : isDarkMode
+                  ? 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
+            }`}
+          >
+            <Rocket className="w-4 h-4 flex-shrink-0 text-purple-400" />
+            {!isCollapsed && <span>#showdev</span>}
+          </button>
+
+          {/* My Posts & Drafts */}
           <button
             onClick={() => handleNavClick('My Notes')}
-            title="My Notes"
+            title="My Posts & Drafts"
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
               currentActive === 'My Notes'
                 ? isDarkMode
@@ -161,13 +255,13 @@ export function HeroSidebar({
             }`}
           >
             <FileText className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span>My Notes</span>}
+            {!isCollapsed && <span>My Posts</span>}
           </button>
 
-          {/* Bookmarks */}
+          {/* Reading List */}
           <button
             onClick={() => handleNavClick('Bookmarks')}
-            title="Bookmarks"
+            title="Reading List"
             className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
               currentActive === 'Bookmarks'
                 ? isDarkMode
@@ -179,114 +273,57 @@ export function HeroSidebar({
             }`}
           >
             <Bookmark className="w-4 h-4 flex-shrink-0" />
-            {!isCollapsed && <span>Bookmarks</span>}
+            {!isCollapsed && <span>Reading List</span>}
           </button>
         </nav>
 
-        {/* Spaces Section */}
+        {/* Following Section */}
         <div className="pt-2">
           {!isCollapsed && (
-            <div className={`px-3 pb-2 text-xs font-semibold tracking-wide ${isDarkMode ? 'text-zinc-500' : 'text-slate-400'}`}>
-              Spaces
+            <div
+              className={`px-3 pb-2 text-[11px] font-bold uppercase tracking-wider font-mono ${
+                isDarkMode ? 'text-zinc-500' : 'text-slate-400'
+              }`}
+            >
+              <span>Following</span>
             </div>
           )}
 
           <div className="space-y-1">
-            {/* My Library Collapsible */}
-            <div>
+            {followedDevs.map((dev) => (
               <button
-                onClick={() => isCollapsed ? toggleCollapse() : setIsLibraryOpen(!isLibraryOpen)}
-                title="My library"
-                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'justify-between px-3 py-2'} rounded-xl text-sm font-medium transition-colors group ${
-                  isDarkMode
-                    ? 'text-zinc-200 hover:bg-zinc-900/60'
-                    : 'text-slate-700 hover:bg-slate-100/80'
+                key={dev.id}
+                onClick={() => handleNavClick('@' + dev.handle)}
+                title={`${dev.name} (@${dev.handle})`}
+                className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-2.5 px-3 py-2'} rounded-xl text-xs font-medium transition-all ${
+                  currentActive === '@' + dev.handle
+                    ? isDarkMode
+                      ? 'bg-[#27272a]/80 text-white shadow-xs font-semibold'
+                      : 'bg-slate-200/80 text-slate-900 shadow-xs font-semibold'
+                    : isDarkMode
+                      ? 'text-zinc-300 hover:text-white hover:bg-zinc-900/60'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
                 }`}
               >
-                <div className="flex items-center gap-3">
-                  <Lock className={`w-4 h-4 flex-shrink-0 ${isDarkMode ? 'text-zinc-400 group-hover:text-zinc-200' : 'text-slate-400 group-hover:text-slate-700'}`} />
-                  {!isCollapsed && <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>My library</span>}
-                </div>
+                <img
+                  src={dev.avatar}
+                  alt={dev.name}
+                  className="w-5 h-5 rounded-full object-cover flex-shrink-0 border border-zinc-700"
+                />
                 {!isCollapsed && (
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform duration-200 ${
-                      isDarkMode ? 'text-zinc-400' : 'text-slate-400'
-                    } ${isLibraryOpen ? '' : '-rotate-90'}`}
-                  />
+                  <div className="flex flex-col items-start min-w-0 text-left">
+                    <span className="text-xs font-semibold truncate leading-tight">{dev.name}</span>
+                    <span className="text-[10px] font-mono text-emerald-500 truncate leading-tight">@{dev.handle}</span>
+                  </div>
                 )}
               </button>
+            ))}
 
-              {/* Nested tree items */}
-              {isLibraryOpen && !isCollapsed && (
-                <div className={`ml-5 mt-1 pl-3 space-y-1 border-l ${
-                  isDarkMode ? 'border-zinc-800/80' : 'border-slate-200'
-                }`}>
-                  <button
-                    onClick={() => handleNavClick('Design Tokens')}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors ${
-                      currentActive === 'Design Tokens'
-                        ? isDarkMode ? 'text-white font-medium bg-zinc-800/40' : 'text-slate-900 font-semibold bg-slate-200/60'
-                        : isDarkMode ? 'text-zinc-300 hover:text-white hover:bg-zinc-900/40' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                    }`}
-                  >
-                    <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <span>Design Tokens</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavClick('Color Palette')}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors ${
-                      currentActive === 'Color Palette'
-                        ? isDarkMode ? 'text-white font-medium bg-zinc-800/40' : 'text-slate-900 font-semibold bg-slate-200/60'
-                        : isDarkMode ? 'text-zinc-300 hover:text-white hover:bg-zinc-900/40' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                    }`}
-                  >
-                    <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <span>Color Palette</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleNavClick('Typography')}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-sm transition-colors ${
-                      currentActive === 'Typography'
-                        ? isDarkMode ? 'text-white font-medium bg-zinc-800/40' : 'text-slate-900 font-semibold bg-slate-200/60'
-                        : isDarkMode ? 'text-zinc-300 hover:text-white hover:bg-zinc-900/40' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-                    }`}
-                  >
-                    <FileText className="w-4 h-4 text-slate-400 flex-shrink-0" />
-                    <span>Typography</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* Design Team */}
-            <button
-              onClick={() => handleNavClick('Design team')}
-              title="Design team"
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-all ${
-                currentActive === 'Design team'
-                  ? isDarkMode ? 'bg-[#27272a]/80 text-white font-semibold' : 'bg-slate-200/80 text-slate-900 font-semibold'
-                  : isDarkMode ? 'text-zinc-300 hover:text-white hover:bg-zinc-900/60' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/80'
-              }`}
-            >
-              <Users className="w-4 h-4 text-slate-400 flex-shrink-0" />
-              {!isCollapsed && <span className={`font-semibold ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Design team</span>}
-            </button>
-
-            {/* Add Space */}
-            <button
-              onClick={() => handleNavClick('Add space')}
-              title="Add space"
-              className={`w-full flex items-center ${isCollapsed ? 'justify-center px-0 py-2' : 'gap-3 px-3 py-2'} rounded-xl text-sm font-medium transition-colors ${
-                isDarkMode
-                  ? 'text-zinc-400 hover:text-white hover:bg-zinc-900/60'
-                  : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100/80'
-              }`}
-            >
-              <Plus className="w-4 h-4 text-slate-400 flex-shrink-0" />
-              {!isCollapsed && <span>Add space</span>}
-            </button>
+            {followedDevs.length === 0 && !isCollapsed && (
+              <div className="px-3 py-1.5 text-[11px] text-zinc-500 italic">
+                No followed users
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -315,12 +352,17 @@ export function HeroSidebar({
                   {(currentUser?.name || userEmail || 'JG').substring(0, 2).toUpperCase()}
                 </div>
               )}
-              <div className="overflow-hidden">
-                <div className={`font-semibold text-sm truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-                  {currentUser?.name || userEmail?.split('@')[0] || 'Junior Garcia'}
+              <div className="overflow-hidden flex-1">
+                <div className={`font-bold text-sm truncate flex items-center gap-1.5 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+                  <span>{currentUser?.name || userEmail?.split('@')[0] || 'Dev User'}</span>
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-emerald-500/15 text-emerald-500 font-bold">DEV</span>
                 </div>
                 <div className={`text-xs truncate ${isDarkMode ? 'text-zinc-400' : 'text-slate-500'}`}>
-                  {currentUser?.email || userEmail || 'junior@heroui.com'}
+                  {currentUser?.email || userEmail || 'dev@overstack.dev'}
+                </div>
+                <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-amber-500 mt-1">
+                  <Zap className="w-3 h-3 text-amber-500" />
+                  <span>1,420 Rep • Pro Builder</span>
                 </div>
               </div>
             </div>

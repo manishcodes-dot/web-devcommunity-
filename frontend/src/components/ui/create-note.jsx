@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -19,19 +19,17 @@ import {
   Send,
   Trash2,
   Save,
-  Sun,
-  Moon,
   UploadCloud,
-  Globe,
-  Lock,
 } from 'lucide-react';
 import { createArticleApi } from '@/services/articleService';
 
-export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, userEmail = 'junior@heroui.com' }) {
+const generateBlockId = (prefix = 'b') =>
+  `${prefix}_${Math.random().toString(36).substring(2, 9)}`;
+
+export function CreateNotePage({ isDarkMode = false, onSaveNote, userEmail = 'junior@heroui.com' }) {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [coverImage, setCoverImage] = useState('');
-  const [isPrivate, setIsPrivate] = useState(false);
   const [showImageInput, setShowImageInput] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [draftSavedStatus, setDraftSavedStatus] = useState(false);
@@ -68,7 +66,7 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
   }, [formatMenuOpenId]);
 
   const handleAddBlock = (afterId, type = 'paragraph') => {
-    const newBlock = { id: String(Date.now()), type, content: '' };
+    const newBlock = { id: generateBlockId('blk'), type, content: '' };
     const index = blocks.findIndex((b) => b.id === afterId);
     const newBlocks = [...blocks];
     if (index !== -1) {
@@ -121,7 +119,7 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
     const firstParagraph =
       blocks.find((b) => b.content.trim())?.content || title;
     const noteData = {
-      id: String(Date.now()),
+      id: generateBlockId('draft'),
       title: title.trim(),
       excerpt:
         firstParagraph.length > 120
@@ -129,7 +127,7 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
           : firstParagraph,
       content: blocks.map((b) => b.content).join('\n\n') || title,
       status: 'draft',
-      isPrivate,
+      isPrivate: false,
       coverImage: coverImage || '',
       author: userEmail.split('@')[0] || 'Junior Garcia',
       authorEmail: userEmail,
@@ -164,7 +162,7 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
         if (b.type === 'code') return `\`\`\`\n${b.content}\n\`\`\``;
         if (b.type === 'bullet') return `• ${b.content}`;
         if (b.type === 'numbered') return `1. ${b.content}`;
-        if (b.type === 'callout') return `💡 ${b.content}`;
+        if (b.type === 'callout') return `> [NOTE]\n> ${b.content}`;
         if (b.type === 'divider') return `---`;
         return b.content;
       })
@@ -179,11 +177,11 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
         : firstParagraph;
 
     const noteData = {
-      id: String(Date.now()),
+      id: generateBlockId('pub'),
       title: title.trim(),
       excerpt,
       content: fullContent || title,
-      isPrivate,
+      isPrivate: false,
       coverImage: coverImage.trim() || '',
       author: userEmail.split('@')[0] || 'Junior Garcia',
       authorEmail: userEmail,
@@ -204,7 +202,7 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
         summary: noteData.excerpt,
         content: noteData.content,
         coverImage: noteData.coverImage,
-        isPrivate: noteData.isPrivate,
+        isPrivate: false,
       });
 
       navigate('/app');
@@ -318,21 +316,6 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
         </div>
 
         <div className="flex items-center gap-3">
-          {/* Public / Private Visibility Toggle Button */}
-          <button
-            type="button"
-            onClick={() => setIsPrivate(!isPrivate)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-              isPrivate
-                ? 'bg-amber-500/10 border-amber-500/40 text-amber-500 hover:bg-amber-500/20'
-                : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20'
-            }`}
-            title={isPrivate ? "Private: Only you can see this note" : "Public: Everyone can see this note"}
-          >
-            {isPrivate ? <Lock className="w-3.5 h-3.5" /> : <Globe className="w-3.5 h-3.5" />}
-            <span>{isPrivate ? 'Private' : 'Public'}</span>
-          </button>
-
           {/* Save as Draft Button */}
           <button
             type="button"
@@ -346,7 +329,7 @@ export function CreateNotePage({ isDarkMode = false, onToggleTheme, onSaveNote, 
             }`}
           >
             <Save className="w-3.5 h-3.5" />
-            <span>{draftSavedStatus ? 'Draft Saved ✓' : 'Save as Draft'}</span>
+            <span>{draftSavedStatus ? 'Draft Saved' : 'Save as Draft'}</span>
           </button>
 
           {/* Add Cover Image Trigger */}

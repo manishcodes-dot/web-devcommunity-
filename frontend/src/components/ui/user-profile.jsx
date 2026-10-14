@@ -5,14 +5,18 @@ import {
   Calendar,
   Edit3,
   FileText,
-  Lock,
-  Globe,
+  ArrowLeft,
   Plus,
   Eye,
   Save,
   X,
   CheckCircle2,
   Trash2,
+  Zap,
+  Award,
+  Code2,
+  Sparkles,
+  Flame,
 } from 'lucide-react';
 import { fetchArticlesApi, deleteArticleApi } from '@/services/articleService';
 import { updateUserProfileApi } from '@/services/userService';
@@ -23,7 +27,6 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
   const { updateUser } = useAuth();
   const [userNotes, setUserNotes] = useState([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'public' | 'private'
   const [isEditing, setIsEditing] = useState(false);
 
   // Edit form state
@@ -87,15 +90,7 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
     }
   };
 
-  const publicNotes = userNotes.filter((n) => !n.isPrivate);
-  const privateNotes = userNotes.filter((n) => n.isPrivate);
-
-  const displayedNotes =
-    activeTab === 'public'
-      ? publicNotes
-      : activeTab === 'private'
-      ? privateNotes
-      : userNotes;
+  const displayedNotes = userNotes;
 
   const totalViews = userNotes.reduce((acc, curr) => acc + (curr.viewsCount || 0), 0);
 
@@ -126,13 +121,14 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
           {onBackToFeed && (
             <button
               onClick={onBackToFeed}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border transition-colors cursor-pointer ${
                 isDarkMode
                   ? 'bg-zinc-800 border-zinc-700 text-zinc-200 hover:bg-zinc-700'
                   : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
               }`}
             >
-              ← Back to Feed
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Back to Feed</span>
             </button>
           )}
         </div>
@@ -180,7 +176,11 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
                   {currentUser?.name || userEmail?.split('@')[0] || 'Junior Garcia'}
                 </h2>
                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide bg-emerald-500/10 border border-emerald-500/30 text-emerald-500">
-                  {currentUser?.role || 'User'}
+                  {currentUser?.role || 'Developer'}
+                </span>
+                <span className="flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-bold bg-amber-500/10 border border-amber-500/30 text-amber-500">
+                  <Zap className="w-3 h-3" />
+                  <span>1,420 Dev Karma</span>
                 </span>
               </div>
 
@@ -307,11 +307,11 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
           isDarkMode ? 'bg-[#141417] border-zinc-800' : 'bg-white border-slate-200 shadow-xs'
         }`}>
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Public Notes</span>
-            <Globe className="w-4 h-4 text-emerald-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">Articles Published</span>
+            <FileText className="w-4 h-4 text-emerald-500" />
           </div>
           <div className={`text-2xl font-extrabold mt-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-            {publicNotes.length}
+            {userNotes.length}
           </div>
         </div>
 
@@ -319,11 +319,11 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
           isDarkMode ? 'bg-[#141417] border-zinc-800' : 'bg-white border-slate-200 shadow-xs'
         }`}>
           <div className="flex items-center justify-between text-zinc-400">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-500">Private Notes</span>
-            <Lock className="w-4 h-4 text-amber-500" />
+            <span className="text-xs font-bold uppercase tracking-wider text-amber-500">Dev Reputation</span>
+            <Zap className="w-4 h-4 text-amber-500" />
           </div>
           <div className={`text-2xl font-extrabold mt-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
-            {privateNotes.length}
+            1,420
           </div>
         </div>
 
@@ -336,6 +336,108 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
           </div>
           <div className={`text-2xl font-extrabold mt-2 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
             {totalViews}
+          </div>
+        </div>
+      </div>
+
+      {/* Developer Badges & Tech Stack Specialties */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Card 1: Developer Badges */}
+        <div
+          className={`p-5 rounded-3xl border space-y-3.5 ${
+            isDarkMode
+              ? 'bg-[#141417] border-zinc-800'
+              : 'bg-white border-slate-200 shadow-xs'
+          }`}
+        >
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <Award className="w-4 h-4 text-amber-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider">
+                Developer Badges & Creds
+              </h3>
+            </div>
+            <span className="text-[11px] font-mono text-zinc-400">4 Unlocked</span>
+          </div>
+          <div className="grid grid-cols-2 gap-2.5">
+            {[
+              {
+                icon: <Code2 className="w-4 h-4 text-emerald-500" />,
+                title: 'Core Contributor',
+                desc: 'Top 5% author in Dev Feed',
+                bg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400',
+              },
+              {
+                icon: <Flame className="w-4 h-4 text-orange-500" />,
+                title: '7-Day Streak',
+                desc: 'Consistent daily commits',
+                bg: 'bg-orange-500/10 border-orange-500/20 text-orange-600 dark:text-orange-400',
+              },
+              {
+                icon: <Sparkles className="w-4 h-4 text-purple-500" />,
+                title: 'Unicorn Creator',
+                desc: 'Earned 50+ unicorns on posts',
+                bg: 'bg-purple-500/10 border-purple-500/20 text-purple-600 dark:text-purple-400',
+              },
+              {
+                icon: <Zap className="w-4 h-4 text-blue-500" />,
+                title: 'OSS Pioneer',
+                desc: 'Created #showdev project',
+                bg: 'bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-blue-400',
+              },
+            ].map((badge) => (
+              <div
+                key={badge.title}
+                className={`p-2.5 rounded-2xl border flex items-start gap-2.5 ${badge.bg}`}
+              >
+                <div className="p-1 rounded-xl bg-white/60 dark:bg-zinc-900/60 shrink-0">
+                  {badge.icon}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold leading-tight truncate">{badge.title}</p>
+                  <p className="text-[10px] opacity-80 leading-tight mt-0.5">{badge.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Card 2: Tech Stack & Skills */}
+        <div
+          className={`p-5 rounded-3xl border space-y-3.5 ${
+            isDarkMode
+              ? 'bg-[#141417] border-zinc-800'
+              : 'bg-white border-slate-200 shadow-xs'
+          }`}
+        >
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
+            <div className="flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-emerald-500" />
+              <h3 className="text-xs font-bold uppercase tracking-wider">
+                Tech Stack & Specialties
+              </h3>
+            </div>
+            <span className="text-[11px] font-mono text-emerald-500 font-bold">Full-Stack Engineer</span>
+          </div>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              { name: 'React 19', color: 'bg-cyan-500/10 text-cyan-500 border-cyan-500/30' },
+              { name: 'TypeScript', color: 'bg-blue-500/10 text-blue-500 border-blue-500/30' },
+              { name: 'Node.js', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30' },
+              { name: 'Next.js', color: 'bg-zinc-500/10 text-zinc-400 border-zinc-500/30' },
+              { name: 'MongoDB', color: 'bg-green-500/10 text-green-500 border-green-500/30' },
+              { name: 'TailwindCSS', color: 'bg-teal-500/10 text-teal-500 border-teal-500/30' },
+              { name: 'Docker & Podman', color: 'bg-sky-500/10 text-sky-500 border-sky-500/30' },
+              { name: 'Python & LLMs', color: 'bg-amber-500/10 text-amber-500 border-amber-500/30' },
+              { name: 'GraphQL', color: 'bg-pink-500/10 text-pink-500 border-pink-500/30' },
+            ].map((skill) => (
+              <span
+                key={skill.name}
+                className={`px-3 py-1 rounded-xl text-xs font-mono font-semibold border ${skill.color} hover:scale-105 transition-transform cursor-default`}
+              >
+                {skill.name}
+              </span>
+            ))}
           </div>
         </div>
       </div>
@@ -356,36 +458,9 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
           <div className={`flex rounded-xl p-1 text-xs font-semibold ${
             isDarkMode ? 'bg-[#141417] border border-zinc-800' : 'bg-slate-100 border border-slate-200'
           }`}>
-            <button
-              onClick={() => setActiveTab('all')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'all'
-                  ? 'bg-emerald-500 text-white shadow-xs'
-                  : isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              All Notes ({userNotes.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('public')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'public'
-                  ? 'bg-emerald-500 text-white shadow-xs'
-                  : isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Public 🌐 ({publicNotes.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('private')}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                activeTab === 'private'
-                  ? 'bg-emerald-500 text-white shadow-xs'
-                  : isDarkMode ? 'text-zinc-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Private 🔒 ({privateNotes.length})
-            </button>
+            <span className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-white shadow-xs">
+              All Published Notes ({userNotes.length})
+            </span>
           </div>
         </div>
 
@@ -421,15 +496,9 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold border ${
-                      note.isPrivate
-                        ? 'bg-amber-500/10 border-amber-500/30 text-amber-500'
-                        : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-500'
-                    }`}
-                  >
-                    {note.isPrivate ? <Lock className="w-3 h-3" /> : <Globe className="w-3 h-3" />}
-                    <span>{note.isPrivate ? 'Private' : 'Public'}</span>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-bold border bg-emerald-500/10 border-emerald-500/30 text-emerald-500">
+                    <FileText className="w-3 h-3" />
+                    <span>Published</span>
                   </span>
 
                   <span className="text-[11px] font-medium text-zinc-500">

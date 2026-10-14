@@ -61,7 +61,7 @@ export function SidebarShowcase({ onBack }) {
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-white tracking-tight">
-                    Welcome back, Junior 👋
+                    Welcome back, Junior
                   </h1>
                   <p className="text-zinc-400 text-sm mt-1">
                     Manage your design tokens, component spaces, and team workspaces.

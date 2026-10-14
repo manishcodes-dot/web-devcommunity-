@@ -15,18 +15,9 @@ export const getArticles = async (query, user = null) => {
     filter.isFeatured = featured === 'true';
   }
 
-  // Handle Public vs Private visibility based on authenticated user context
+  // All articles uploaded to the community are public and visible to all users
   if (myNotes === 'true' && user) {
     filter.author = user._id;
-  } else if (user) {
-    // Show all public articles PLUS private articles owned by current user
-    filter.$or = [
-      { isPrivate: { $ne: true } },
-      { author: user._id }
-    ];
-  } else {
-    // Unauthenticated: show only public articles
-    filter.isPrivate = { $ne: true };
   }
 
   if (search) {
@@ -108,21 +99,7 @@ export const getArticleByIdOrSlug = async (identifier, user = null) => {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, 'Article not found');
   }
 
-  // Privacy protection check
-  if (article.isPrivate) {
-    const authorIdStr = article.author?._id
-      ? article.author._id.toString()
-      : article.author?.toString();
-    const userIdStr = user?._id
-      ? user._id.toString()
-      : user?.id?.toString() || user?.toString();
-    if (!user || (authorIdStr !== userIdStr && user.role !== 'admin')) {
-      throw new ApiError(
-        HTTP_STATUS.FORBIDDEN,
-        'You are not authorized to view this private note'
-      );
-    }
-  }
+
 
   // Increment views count
   article.viewsCount += 1;
@@ -184,7 +161,7 @@ export const createArticle = async (articleData, authorId) => {
     ...articleData,
     summary,
     author: authorId,
-    isPrivate: Boolean(articleData.isPrivate),
+    isPrivate: false,
   };
 
   if (!payload.category || (typeof payload.category === 'string' && payload.category.trim() === '')) {
