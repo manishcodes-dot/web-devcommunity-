@@ -25,7 +25,7 @@ import {
   FaExternalLinkAlt,
   FaHashtag,
 } from "react-icons/fa";
-import { Sparkles, Clock, Flame, Check, X, MessageSquare, Zap, Copy, Share2 } from "lucide-react";
+import { Sparkles, Clock, Flame, Check, X, MessageSquare, Zap, Copy, Share2, MoreHorizontal, UserPlus, UserCheck } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
@@ -242,7 +242,22 @@ export function NewsHome({
   const [selectedCategory, setSelectedCategory] = useState("Relevant");
   const [feedSort, setFeedSort] = useState("relevant"); // "relevant" | "latest" | "top"
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedArticle, setSelectedArticle] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const target = params.get("article") || params.get("note");
+      if (target) {
+        return (
+          INITIAL_DEV_ARTICLES.find(
+            (a) => a.id === target || (a.title && a.title.toLowerCase().includes(target.toLowerCase()))
+          ) || null
+        );
+      }
+    } catch (err) {
+      console.debug("Could not parse article from URL:", err);
+    }
+    return null;
+  });
   const [bookmarkedIds, setBookmarkedIds] = useState(() => {
     try {
       const saved = localStorage.getItem("news_portal_bookmarks");
@@ -256,25 +271,84 @@ export function NewsHome({
     controlledIsDarkMode !== undefined ? controlledIsDarkMode : internalIsDarkMode;
   const setIsDarkMode = (val) =>
     setInternalIsDarkMode(typeof val === "function" ? val(isDarkMode) : val);
-  const [followedWriters, setFollowedWriters] = useState({});
+  const [followedWriters, setFollowedWriters] = useState(() => {
+    try {
+      const saved = localStorage.getItem("news_portal_followed_writers");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [openMenuId, setOpenMenuId] = useState(null);
-
-  // Comments state for currently selected article
+  const [isArticleMenuOpen, setIsArticleMenuOpen] = useState(false);
   const [comments, setComments] = useState([]);
-  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [newComment, setNewComment] = useState("");
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [commentError, setCommentError] = useState("");
 
+  const toggleFollowWriter = (writerKey, e) => {
+    if (e) e.stopPropagation();
+    const cleanHandle = String(writerKey).replace(/^@/, "");
+
+    setFollowedWriters((prev) => {
+      const isNowFollowing = !prev[writerKey] && !prev[cleanHandle] && !prev[`@${cleanHandle}`];
+      const updated = {
+        ...prev,
+        [writerKey]: isNowFollowing,
+        [cleanHandle]: isNowFollowing,
+        [`@${cleanHandle}`]: isNowFollowing,
+      };
+      try {
+        localStorage.setItem("news_portal_followed_writers", JSON.stringify(updated));
+      } catch (err) {
+        console.error("Failed to persist followed writers:", err);
+      }
+
+      // Sync with sidebar followedDevs
+      try {
+        const raw = localStorage.getItem("overstack_followed_users");
+        let list = raw ? JSON.parse(raw) : [];
+        if (!Array.isArray(list)) list = [];
+        const existingIdx = list.findIndex(
+          (u) =>
+            (u.handle && u.handle.toLowerCase() === cleanHandle.toLowerCase()) ||
+            (u.name && u.name.toLowerCase() === cleanHandle.toLowerCase())
+        );
+
+        if (existingIdx >= 0) {
+          list[existingIdx].isFollowing = isNowFollowing;
+        } else if (isNowFollowing) {
+          list.push({
+            id: `dev-${cleanHandle}-${Date.now()}`,
+            name: selectedArticle?.author || cleanHandle,
+            handle: cleanHandle,
+            avatar:
+              selectedArticle?.authorAvatar ||
+              `https://api.dicebear.com/7.x/initials/svg?seed=${cleanHandle}`,
+            isFollowing: true,
+          });
+        }
+        localStorage.setItem("overstack_followed_users", JSON.stringify(list));
+        window.dispatchEvent(new Event("following_updated"));
+      } catch (err) {
+        console.error("Failed to sync overstack_followed_users:", err);
+      }
+
+      return updated;
+    });
+  };
+
   // Close article options menu popover on click outside
   useEffect(() => {
-    if (openMenuId === null) return;
+    if (!openMenuId && !isArticleMenuOpen) return;
     const handleClickOutside = () => {
       setOpenMenuId(null);
+      setIsArticleMenuOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [openMenuId]);
+  }, [openMenuId, isArticleMenuOpen]);
 
   // Fetch real articles from backend MongoDB database
   useEffect(() => {
@@ -311,11 +385,19 @@ export function NewsHome({
           isLiked: Boolean(art.isLiked),
           isBookmarked: savedBookmarks.includes(art._id),
         }));
-        if (myNotesOnly) {
-          setArticles(formatted);
-        } else {
-          // Combine MongoDB articles with rich developer community articles
-          setArticles([...formatted, ...INITIAL_DEV_ARTICLES]);
+        const combined = myNotesOnly ? formatted : [...formatted, ...INITIAL_DEV_ARTICLES];
+        setArticles(combined);
+        try {
+          const params = new URLSearchParams(window.location.search);
+          const target = params.get("article") || params.get("note");
+          if (target) {
+            const found = combined.find(
+              (a) => a.id === target || a._id === target || (a.title && a.title.toLowerCase().includes(target.toLowerCase()))
+            );
+            if (found) setSelectedArticle(found);
+          }
+        } catch (err) {
+          console.debug("Could not select article from URL:", err);
         }
       } catch (err) {
         console.error('Failed to fetch articles from database:', err.message);
@@ -603,12 +685,27 @@ export function NewsHome({
     setComments([]);
     setCommentError("");
     setSelectedArticle(art);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set("article", art.id);
+      window.history.pushState({}, "", url.toString());
+    } catch (err) {
+      console.debug("URL update failed:", err);
+    }
   };
 
   const handleBackToFeed = () => {
     setComments([]);
     setCommentError("");
     setSelectedArticle(null);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("article");
+      url.searchParams.delete("note");
+      window.history.pushState({}, "", url.toString());
+    } catch (err) {
+      console.debug("URL update failed:", err);
+    }
   };
 
   // Fetch comments whenever a MongoDB article is opened
@@ -942,10 +1039,10 @@ export function NewsHome({
 
   return (
     <div
-      className={`min-h-screen w-full font-sans transition-colors duration-300 flex flex-col md:flex-row ${
-        isDarkMode
-          ? "bg-[#222831] text-[#eeeeee] selection:bg-[#2FA084] selection:text-white"
-          : "bg-[#eeeeee] text-[#222831] selection:bg-[#2FA084] selection:text-white"
+      className={`min-h-full w-full font-sans transition-colors duration-300 flex flex-col md:flex-row ${
+        selectedArticle
+          ? (isDarkMode ? "bg-[#18181b] text-white" : "bg-white text-slate-900")
+          : (isDarkMode ? "bg-[#222831] text-[#eeeeee]" : "bg-[#eeeeee] text-[#222831]")
       }`}
     >
       {/* 1. Optional Standalone Left Sidebar (Only rendered if hideSidebar is false) */}
@@ -1053,196 +1150,205 @@ export function NewsHome({
       <main
         className={`flex-1 ${
           hideSidebar ? "" : "md:ml-64"
-        } px-4 py-6 sm:px-6 max-w-7xl mx-auto w-full`}
+        } ${selectedArticle ? "px-6 sm:px-12 py-8 max-w-4xl mx-auto w-full" : "px-4 py-6 sm:px-6 max-w-7xl mx-auto w-full"}`}
       >
         {selectedArticle ? (
-          /* Dedicated Article Page View */
-          <div className="w-full max-w-4xl mx-auto space-y-8 animate-in fade-in duration-200">
-            {/* Navigation & Actions Top Bar */}
+          /* Full-Page Note View */
+          <div className="w-full space-y-8 animate-in fade-in duration-200">
+            {/* Top Navigation Bar: Back to Feed */}
             <div className="flex items-center justify-between pb-2">
               <button
                 type="button"
                 onClick={handleBackToFeed}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs ${
+                className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                   isDarkMode
-                    ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-200"
-                    : "bg-white hover:bg-slate-100 text-slate-800 border border-slate-200"
+                    ? "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/60"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
                 }`}
               >
                 <FaArrowLeft className="h-3.5 w-3.5" />
                 <span>Back to feed</span>
               </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(window.location.href);
-                    setCopiedShareLink(true);
-                    setTimeout(() => setCopiedShareLink(false), 2000);
-                  }}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
-                    isDarkMode
-                      ? "border-zinc-800 bg-[#18181b] hover:bg-zinc-800 text-zinc-300"
-                      : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700 shadow-xs"
-                  }`}
-                  title="Share article link"
-                >
-                  {copiedShareLink ? (
-                    <>
-                      <Check className="h-3.5 w-3.5 text-emerald-500" />
-                      <span className="text-emerald-500 font-bold">Link Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Share2 className="h-3.5 w-3.5" />
-                      <span>Share</span>
-                    </>
-                  )}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => toggleLike(selectedArticle.id, e)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
-                    selectedArticle.isLiked
-                      ? "bg-red-500/10 text-red-500 border-red-500/30 shadow-xs"
-                      : isDarkMode
-                      ? "border-zinc-800 bg-[#18181b] hover:text-red-500 text-zinc-300"
-                      : "border-slate-200 bg-white hover:text-red-500 text-slate-700 shadow-xs"
-                  }`}
-                >
-                  {selectedArticle.isLiked ? (
-                    <FaHeart className="h-3.5 w-3.5 text-red-500" />
-                  ) : (
-                    <FaRegHeart className="h-3.5 w-3.5" />
-                  )}
-                  <span>{selectedArticle.claps}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={(e) => toggleBookmark(selectedArticle.id, e)}
-                  className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
-                    selectedArticle.isBookmarked
-                      ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
-                      : isDarkMode
-                      ? "border-zinc-800 bg-[#18181b] text-zinc-400 hover:text-white"
-                      : "border-slate-200 bg-white text-slate-600 hover:text-slate-900 shadow-xs"
-                  }`}
-                  title={selectedArticle.isBookmarked ? "Remove bookmark" : "Bookmark article"}
-                >
-                  {selectedArticle.isBookmarked ? (
-                    <FaBookmark className="h-4 w-4 text-emerald-500" />
-                  ) : (
-                    <FaRegBookmark className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
             </div>
 
-            {/* Dedicated Article Card Container with Background */}
-            <article
-              className={`rounded-3xl border transition-all p-6 sm:p-10 md:p-12 space-y-8 shadow-sm ${
-                isDarkMode
-                  ? "bg-[#18181b] border-zinc-800 text-white"
-                  : "bg-white border-slate-200/90 text-slate-900"
-              }`}
-            >
-              {/* Category & Tags Header */}
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                  <FaHashtag className="w-2.5 h-2.5" />
-                  {selectedArticle.category || 'Developer Note'}
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-slate-500 dark:text-zinc-400 bg-slate-100 dark:bg-zinc-800/60">
-                  <Clock className="w-3 h-3" />
-                  {selectedArticle.readTime || '3 min read'}
-                </span>
-                {Array.isArray(selectedArticle.tags) && selectedArticle.tags.map((t, tidx) => (
-                  <span
-                    key={tidx}
-                    className="text-xs font-medium text-slate-500 dark:text-zinc-400 hover:text-emerald-500 transition-colors"
-                  >
-                    #{t}
-                  </span>
-                ))}
-              </div>
-
-              {/* Title */}
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white">
-                {selectedArticle.title}
-              </h1>
-
-              {/* Author Metadata Bar */}
-              <div className="flex items-center justify-between py-4 border-y border-slate-100 dark:border-zinc-800/80">
-                <div className="flex items-center gap-3.5">
-                  {selectedArticle.authorAvatar && typeof selectedArticle.authorAvatar === 'string' && selectedArticle.authorAvatar.startsWith('http') ? (
-                    <img
-                      src={selectedArticle.authorAvatar}
-                      alt={selectedArticle.author || 'Author'}
-                      className="h-11 w-11 rounded-full object-cover shrink-0 border-2 border-emerald-500/30"
-                    />
-                  ) : (
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-500/20">
-                      {(selectedArticle.author || 'Author').substring(0, 2).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                      {selectedArticle.author || 'Community Member'}
-                    </h4>
-                    <p
-                      className={`text-xs ${
-                        isDarkMode ? "text-zinc-400" : "text-slate-500"
+            {/* Note Viewpoint */}
+            <article className="space-y-6">
+              {/* 1. BEFORE THE HEADING: Three-Dots Menu at the side left, User Name & Author to the right */}
+              <div className="relative flex items-center justify-between py-2">
+                <div className="flex items-center gap-3">
+                  {/* Three-Dots Menu at the side left (borderless) */}
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsArticleMenuOpen((prev) => !prev);
+                      }}
+                      className={`p-2 rounded-xl transition-all cursor-pointer ${
+                        isDarkMode
+                          ? "hover:bg-zinc-800/80 text-zinc-400 hover:text-zinc-100"
+                          : "hover:bg-slate-100 text-slate-500 hover:text-slate-800"
                       }`}
+                      title="More options (Follow user, Share, Report)"
                     >
-                      {selectedArticle.authorHandle || '@developer'} • {selectedArticle.publishedAt || 'Recently'}
-                    </p>
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+
+                    {isArticleMenuOpen && (
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className={`absolute left-0 top-full mt-2 w-56 rounded-2xl shadow-2xl z-50 py-1.5 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150 ring-1 ring-black/5 dark:ring-white/10 ${
+                          isDarkMode
+                            ? "bg-[#18181b]/95 text-zinc-200"
+                            : "bg-white/95 text-slate-800"
+                        }`}
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            const authorKey = selectedArticle.authorHandle || selectedArticle.author || 'author';
+                            toggleFollowWriter(authorKey, e);
+                            setIsArticleMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 text-left transition-colors cursor-pointer"
+                        >
+                          {followedWriters[selectedArticle.authorHandle || selectedArticle.author] || followedWriters[(selectedArticle.authorHandle || '').replace(/^@/, '')] ? (
+                            <>
+                              <UserCheck className="w-4 h-4 text-emerald-500" />
+                              <span>Following @{(selectedArticle.authorHandle || selectedArticle.author || 'developer').replace(/^@/, '')}</span>
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="w-4 h-4 text-emerald-500" />
+                              <span>Follow @{(selectedArticle.authorHandle || selectedArticle.author || 'developer').replace(/^@/, '')}</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(window.location.href);
+                            setCopiedShareLink(true);
+                            setIsArticleMenuOpen(false);
+                            setTimeout(() => setCopiedShareLink(false), 2000);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                        >
+                          <Copy className="w-4 h-4 text-slate-400" />
+                          <span>Copy Link</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (navigator.share) {
+                              navigator.share({ title: selectedArticle.title, url: window.location.href }).catch(() => {});
+                            } else {
+                              navigator.clipboard.writeText(window.location.href);
+                              setCopiedShareLink(true);
+                              setTimeout(() => setCopiedShareLink(false), 2000);
+                            }
+                            setIsArticleMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-zinc-800 text-left transition-colors cursor-pointer"
+                        >
+                          <Share2 className="w-4 h-4 text-slate-400" />
+                          <span>Share Post</span>
+                        </button>
+
+                        <div className="my-1 border-t border-slate-100 dark:border-zinc-800/80" />
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            alert("Thank you. This note has been reported for review.");
+                            setIsArticleMenuOpen(false);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2 text-xs font-semibold text-amber-500 hover:bg-amber-500/10 text-left transition-colors cursor-pointer"
+                        >
+                          <FaFlag className="w-3.5 h-3.5" />
+                          <span>Report Post</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* User Name & Author info right beside three-dots */}
+                  <div className="flex items-center gap-3">
+                    {selectedArticle.authorAvatar && typeof selectedArticle.authorAvatar === 'string' && selectedArticle.authorAvatar.startsWith('http') ? (
+                      <img
+                        src={selectedArticle.authorAvatar}
+                        alt={selectedArticle.author || 'Author'}
+                        className="h-10 w-10 rounded-full object-cover shrink-0 shadow-xs"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                        {(selectedArticle.author || 'Author').substring(0, 2).toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
+                        {selectedArticle.author || 'Author'}
+                      </h4>
+                      <p
+                        className={`text-xs ${
+                          isDarkMode ? "text-zinc-400" : "text-slate-500"
+                        }`}
+                      >
+                        {selectedArticle.authorHandle || '@developer'} • {selectedArticle.publishedAt || 'Recently'}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="hidden sm:flex items-center gap-2">
-                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                    Community Note
-                  </span>
-                </div>
+                {/* Right side: Follow / Following Button (borderless solid pill) */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    const authorKey = selectedArticle.authorHandle || selectedArticle.author || 'author';
+                    toggleFollowWriter(authorKey, e);
+                  }}
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer ${
+                    (followedWriters[selectedArticle.authorHandle || selectedArticle.author] || followedWriters[(selectedArticle.authorHandle || '').replace(/^@/, '')])
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                      : isDarkMode
+                      ? "bg-zinc-100 hover:bg-white text-zinc-900"
+                      : "bg-slate-900 hover:bg-slate-800 text-white"
+                  }`}
+                >
+                  {(followedWriters[selectedArticle.authorHandle || selectedArticle.author] || followedWriters[(selectedArticle.authorHandle || '').replace(/^@/, '')]) ? (
+                    <>
+                      <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
+                      <span>Following</span>
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-3.5 h-3.5" />
+                      <span>Follow</span>
+                    </>
+                  )}
+                </button>
               </div>
 
-              {/* Cover Image */}
-              {selectedArticle.coverImage && (
-                <div className="w-full h-64 sm:h-96 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-zinc-800 shadow-xs">
-                  <img
-                    src={selectedArticle.coverImage}
-                    alt={selectedArticle.title}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
+              {/* 2. THE HEADING (Title) */}
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-slate-900 dark:text-white pt-1">
+                {selectedArticle.title}
+              </h1>
 
-              {/* Structured Note Content */}
-              <div className="py-2">
-                {renderDevContent(selectedArticle.content)}
-              </div>
-
-              {/* Engagement Reaction Bar inside card */}
-              <div
-                className={`flex items-center justify-between pt-6 border-t ${
-                  isDarkMode
-                    ? "border-zinc-800/80 text-zinc-300"
-                    : "border-slate-100 text-slate-700"
-                }`}
-              >
-                <div className="flex items-center gap-3">
+              {/* 3. OPTIONS FOR LIKE, COMMENT AND SO ON (borderless) */}
+              <div className="flex items-center justify-between py-2 text-slate-600 dark:text-zinc-400">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {/* Like Button (borderless) */}
                   <button
                     type="button"
                     onClick={(e) => toggleLike(selectedArticle.id, e)}
-                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                       selectedArticle.isLiked
-                        ? "bg-red-500/10 text-red-500 border border-red-500/30 shadow-xs"
+                        ? "bg-red-500/10 text-red-500"
                         : isDarkMode
-                        ? "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700/60"
-                        : "bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 shadow-xs"
+                        ? "hover:bg-zinc-800/80 text-zinc-400 hover:text-red-400"
+                        : "hover:bg-red-50 text-slate-600 hover:text-red-500"
                     }`}
                   >
                     {selectedArticle.isLiked ? (
@@ -1255,12 +1361,13 @@ export function NewsHome({
                     </span>
                   </button>
 
+                  {/* Comment Button (borderless) */}
                   <a
                     href="#comments-section"
-                    className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs sm:text-sm font-bold transition-colors ${
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors ${
                       isDarkMode
-                        ? "bg-zinc-800/80 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 border border-zinc-700/60"
-                        : "bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 border border-slate-200"
+                        ? "hover:bg-zinc-800/80 text-zinc-400 hover:text-zinc-200"
+                        : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
                     }`}
                   >
                     <FaRegComment className="h-4 w-4" />
@@ -1270,16 +1377,45 @@ export function NewsHome({
                   </a>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  {/* Share button (borderless) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href);
+                      setCopiedShareLink(true);
+                      setTimeout(() => setCopiedShareLink(false), 2000);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isDarkMode
+                        ? "hover:bg-zinc-800 text-zinc-400 hover:text-white"
+                        : "hover:bg-slate-100 text-slate-600 hover:text-slate-900"
+                    }`}
+                    title="Share note"
+                  >
+                    {copiedShareLink ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-emerald-500" />
+                        <span className="text-emerald-500 font-bold">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="h-3.5 w-3.5" />
+                        <span>Share</span>
+                      </>
+                    )}
+                  </button>
+
+                  {/* Bookmark Button (borderless) */}
                   <button
                     type="button"
                     onClick={(e) => toggleBookmark(selectedArticle.id, e)}
-                    className={`p-2.5 rounded-2xl border transition-colors cursor-pointer ${
+                    className={`p-2 rounded-xl transition-colors cursor-pointer ${
                       selectedArticle.isBookmarked
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500"
+                        ? "bg-emerald-500/10 text-emerald-500"
                         : isDarkMode
-                        ? "border-zinc-800 text-zinc-400 hover:text-white bg-zinc-800/50"
-                        : "border-slate-200 text-slate-600 hover:text-slate-900 bg-slate-50"
+                        ? "text-zinc-400 hover:text-white hover:bg-zinc-800"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
                     }`}
                     title={selectedArticle.isBookmarked ? "Remove bookmark" : "Bookmark article"}
                   >
@@ -1291,10 +1427,46 @@ export function NewsHome({
                   </button>
                 </div>
               </div>
+
+              {/* 4. OPTIONS FOR TAGS (borderless, typography-focused) */}
+              <div className="flex flex-wrap items-center gap-3 pt-1 pb-2 text-xs">
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <FaHashtag className="w-2.5 h-2.5" />
+                  {selectedArticle.category || 'General'}
+                </span>
+                <span className="inline-flex items-center gap-1 text-slate-400 dark:text-zinc-500 font-medium">
+                  <Clock className="w-3 h-3" />
+                  {selectedArticle.readTime || '2 min read'}
+                </span>
+                {Array.isArray(selectedArticle.tags) && selectedArticle.tags.map((t, tidx) => (
+                  <span
+                    key={tidx}
+                    className="inline-flex items-center text-slate-500 dark:text-zinc-400 hover:text-emerald-500 transition-colors font-medium cursor-pointer"
+                  >
+                    #{t}
+                  </span>
+                ))}
+              </div>
+
+              {/* 5. AND FROM THERE THE ARTICLE STARTS (borderless) */}
+              {selectedArticle.coverImage && (
+                <div className="w-full h-64 sm:h-96 rounded-2xl overflow-hidden shadow-xs">
+                  <img
+                    src={selectedArticle.coverImage}
+                    alt={selectedArticle.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Structured Note Content */}
+              <div className="py-2">
+                {renderDevContent(selectedArticle.content)}
+              </div>
             </article>
 
-            {/* Discussion & Comments Thread */}
-            <section id="comments-section" className="space-y-6 pt-2">
+            {/* Discussion & Comments Thread (borderless) */}
+            <section id="comments-section" className="space-y-6 pt-4">
               <div className="flex items-center gap-2.5">
                 <MessageSquare className="w-5 h-5 text-emerald-500" />
                 <h3 className="text-xl sm:text-2xl font-bold tracking-tight">
@@ -1302,186 +1474,176 @@ export function NewsHome({
                 </h3>
               </div>
 
-                {/* Comment Input Form */}
-                {activeUser ? (
-                  <form
-                    onSubmit={handleAddComment}
-                    className={`rounded-3xl border p-5 transition-all space-y-3 ${
-                      isDarkMode
-                        ? "bg-[#18181b] border-zinc-800 focus-within:border-emerald-500/60 shadow-lg"
-                        : "bg-white border-slate-200 focus-within:border-emerald-500/60 shadow-xs"
-                    }`}
-                  >
-                    <div className="flex items-start gap-3.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
-                        {(activeUser?.name || "You").substring(0, 2).toUpperCase()}
-                      </div>
-                      <div className="flex-1 space-y-3">
-                        <textarea
-                          rows={3}
-                          value={newComment}
-                          onChange={(e) => setNewComment(e.target.value)}
-                          placeholder="What are your thoughts? Join the conversation..."
-                          className={`w-full bg-transparent resize-none text-sm outline-none placeholder:text-xs sm:placeholder:text-sm ${
-                            isDarkMode
-                              ? "text-white placeholder-zinc-500"
-                              : "text-slate-900 placeholder-slate-400"
-                          }`}
-                        />
-                        {commentError && (
-                          <p className="text-xs text-red-500 font-medium">{commentError}</p>
-                        )}
-                        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-zinc-800/80">
-                          <span
-                            className={`text-[11px] ${
-                              isDarkMode ? "text-zinc-500" : "text-slate-400"
-                            }`}
-                          >
-                            Sharing as{" "}
-                            <span className="font-semibold text-emerald-500">
-                              {activeUser?.name || activeUser?.email}
-                            </span>
-                          </span>
-                          <button
-                            type="submit"
-                            disabled={!newComment.trim() || isSubmittingComment}
-                            className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm active:scale-95"
-                          >
-                            <FaPaperPlane className="h-3 w-3" />
-                            <span>{isSubmittingComment ? "Posting..." : "Respond"}</span>
-                          </button>
-                        </div>
-                      </div>
+              {/* Comment Input Form (borderless) */}
+              {activeUser ? (
+                <form
+                  onSubmit={handleAddComment}
+                  className={`rounded-2xl p-4 sm:p-5 transition-all space-y-3 ${
+                    isDarkMode
+                      ? "bg-zinc-800/40 focus-within:bg-zinc-800/70"
+                      : "bg-slate-100/70 focus-within:bg-slate-100"
+                  }`}
+                >
+                  <div className="flex items-start gap-3.5">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                      {(activeUser?.name || "You").substring(0, 2).toUpperCase()}
                     </div>
-                  </form>
-                ) : (
-                  <div
-                    className={`rounded-3xl border p-6 text-center space-y-3 ${
-                      isDarkMode
-                        ? "bg-[#18181b] border-zinc-800 text-zinc-400"
-                        : "bg-white border-slate-200 text-slate-600 shadow-xs"
-                    }`}
-                  >
-                    <p className="text-sm font-medium">
-                      Sign in to join the discussion and share your thoughts.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => navigate("/login")}
-                      className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer shadow-xs"
-                    >
-                      Sign In to Comment
-                    </button>
-                  </div>
-                )}
-
-                {/* Comments List */}
-                <div className="space-y-3 pt-2">
-                  {isLoadingComments ? (
-                    <div
-                      className={`p-8 text-center text-xs font-medium ${
-                        isDarkMode ? "text-zinc-500" : "text-slate-400"
-                      }`}
-                    >
-                      Loading responses...
-                    </div>
-                  ) : comments.length === 0 ? (
-                    <div
-                      className={`p-8 rounded-3xl border text-center text-xs sm:text-sm font-medium ${
-                        isDarkMode
-                          ? "bg-[#18181b]/50 border-zinc-800/60 text-zinc-500"
-                          : "bg-slate-50 border-slate-200/60 text-slate-400"
-                      }`}
-                    >
-                      There are no responses yet. Be the first to share your thoughts!
-                    </div>
-                  ) : (
-                    comments.map((c) => {
-                      const commentAuthorId =
-                        c.user?._id?.toString() ||
-                        c.user?.id?.toString() ||
-                        c.user?.toString();
-                      const currentUserId =
-                        activeUser?._id?.toString() ||
-                        activeUser?.id?.toString();
-                      const isCommentAuthor =
-                        activeUser &&
-                        (commentAuthorId === currentUserId ||
-                          activeUser.role === "admin");
-
-                      return (
-                        <div
-                          key={c._id || c.id}
-                          className={`rounded-2xl border p-4 sm:p-5 space-y-3 transition-colors ${
-                            isDarkMode
-                              ? "bg-[#18181b] border-zinc-800/80"
-                              : "bg-white border-slate-200/80 shadow-2xs"
+                    <div className="flex-1 space-y-3">
+                      <textarea
+                        rows={3}
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="What are your thoughts? Join the conversation..."
+                        className={`w-full bg-transparent resize-none text-sm outline-none placeholder:text-xs sm:placeholder:text-sm ${
+                          isDarkMode
+                            ? "text-white placeholder-zinc-500"
+                            : "text-slate-900 placeholder-slate-400"
+                        }`}
+                      />
+                      {commentError && (
+                        <p className="text-xs text-red-500 font-medium">{commentError}</p>
+                      )}
+                      <div className="flex items-center justify-between pt-2">
+                        <span
+                          className={`text-[11px] ${
+                            isDarkMode ? "text-zinc-500" : "text-slate-400"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              {c.user?.avatar &&
-                              typeof c.user.avatar === "string" &&
-                              c.user.avatar.startsWith("http") ? (
-                                <img
-                                  src={c.user.avatar}
-                                  alt={c.user?.name || "User"}
-                                  className="h-8 w-8 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
-                                />
-                              ) : (
-                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
-                                  {(c.user?.name || "User").substring(0, 2).toUpperCase()}
-                                </div>
-                              )}
-                              <div>
-                                <h5 className="font-semibold text-xs sm:text-sm">
-                                  {c.user?.name || "Anonymous User"}
-                                </h5>
-                                <span
-                                  className={`text-[11px] ${
-                                    isDarkMode ? "text-zinc-500" : "text-slate-400"
-                                  }`}
-                                >
-                                  {c.createdAt
-                                    ? new Date(c.createdAt).toLocaleDateString(undefined, {
-                                        month: "short",
-                                        day: "numeric",
-                                        year: "numeric",
-                                      })
-                                    : "Recently"}
-                                </span>
-                              </div>
-                            </div>
+                          Sharing as{" "}
+                          <span className="font-semibold text-emerald-500">
+                            {activeUser?.name || activeUser?.email}
+                          </span>
+                        </span>
+                        <button
+                          type="submit"
+                          disabled={!newComment.trim() || isSubmittingComment}
+                          className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer shadow-sm active:scale-95"
+                        >
+                          <FaPaperPlane className="h-3 w-3" />
+                          <span>{isSubmittingComment ? "Posting..." : "Respond"}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              ) : (
+                <div
+                  className={`rounded-2xl p-6 text-center space-y-3 ${
+                    isDarkMode
+                      ? "bg-zinc-800/40 text-zinc-400"
+                      : "bg-slate-100/70 text-slate-600"
+                  }`}
+                >
+                  <p className="text-sm font-medium">
+                    Sign in to join the discussion and share your thoughts.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/login")}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer shadow-xs"
+                  >
+                    Sign In to Comment
+                  </button>
+                </div>
+              )}
 
-                            {isCommentAuthor && (
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteComment(c._id || c.id)}
-                                title="Delete response"
-                                className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
-                                  isDarkMode
-                                    ? "text-zinc-500 hover:text-red-400 hover:bg-zinc-800"
-                                    : "text-slate-400 hover:text-red-500 hover:bg-slate-100"
+              {/* Comments List (borderless) */}
+              <div className="divide-y divide-slate-100 dark:divide-zinc-800/60 pt-2">
+                {isLoadingComments ? (
+                  <div
+                    className={`py-8 text-center text-xs font-medium ${
+                      isDarkMode ? "text-zinc-500" : "text-slate-400"
+                    }`}
+                  >
+                    Loading responses...
+                  </div>
+                ) : comments.length === 0 ? (
+                  <div className="py-8 text-center text-xs sm:text-sm font-medium text-slate-400 dark:text-zinc-500">
+                    There are no responses yet. Be the first to share your thoughts!
+                  </div>
+                ) : (
+                  comments.map((c) => {
+                    const commentAuthorId =
+                      c.user?._id?.toString() ||
+                      c.user?.id?.toString() ||
+                      c.user?.toString();
+                    const currentUserId =
+                      activeUser?._id?.toString() ||
+                      activeUser?.id?.toString();
+                    const isCommentAuthor =
+                      activeUser &&
+                      (commentAuthorId === currentUserId ||
+                        activeUser.role === "admin");
+
+                    return (
+                      <div
+                        key={c._id || c.id}
+                        className="py-4 space-y-2.5 transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            {c.user?.avatar &&
+                            typeof c.user.avatar === "string" &&
+                            c.user.avatar.startsWith("http") ? (
+                              <img
+                                src={c.user.avatar}
+                                alt={c.user?.name || "User"}
+                                className="h-8 w-8 rounded-full object-cover shrink-0"
+                              />
+                            ) : (
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
+                                {(c.user?.name || "User").substring(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <h5 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white">
+                                {c.user?.name || "Anonymous User"}
+                              </h5>
+                              <span
+                                className={`text-[11px] ${
+                                  isDarkMode ? "text-zinc-500" : "text-slate-400"
                                 }`}
                               >
-                                <FaTrash className="h-3 w-3" />
-                              </button>
-                            )}
+                                {c.createdAt
+                                  ? new Date(c.createdAt).toLocaleDateString(undefined, {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    })
+                                  : "Recently"}
+                              </span>
+                            </div>
                           </div>
 
-                          <p
-                            className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
-                              isDarkMode ? "text-zinc-300" : "text-slate-700"
-                            }`}
-                          >
-                            {c.content}
-                          </p>
+                          {isCommentAuthor && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteComment(c._id || c.id)}
+                              title="Delete response"
+                              className={`p-2 rounded-lg text-xs transition-colors cursor-pointer ${
+                                isDarkMode
+                                  ? "text-zinc-500 hover:text-red-400 hover:bg-zinc-800"
+                                  : "text-slate-400 hover:text-red-500 hover:bg-slate-100"
+                              }`}
+                            >
+                              <FaTrash className="h-3 w-3" />
+                            </button>
+                          )}
                         </div>
-                      );
-                    })
-                  )}
-                </div>
-              </section>
+
+                        <p
+                          className={`text-xs sm:text-sm leading-relaxed whitespace-pre-line pl-11 ${
+                            isDarkMode ? "text-zinc-300" : "text-slate-700"
+                          }`}
+                        >
+                          {c.content}
+                        </p>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </section>
           </div>
         ) : (
           /* Main Feed View */
@@ -1552,9 +1714,9 @@ export function NewsHome({
                       }`}
                     >
                       {bookmarksOnly
-                        ? `Reading List (${filteredArticles.length})`
+                        ? `Saved Posts (${filteredArticles.length})`
                         : myNotesOnly
-                        ? `My Posts & Drafts (${filteredArticles.length})`
+                        ? `Stories & Drafts (${filteredArticles.length})`
                         : exploreMode
                         ? `Trending Stories (${filteredArticles.length})`
                         : `Developer Community Feed (${filteredArticles.length})`}
@@ -1632,18 +1794,18 @@ export function NewsHome({
                 >
                   <p className="text-sm font-medium">
                     {bookmarksOnly
-                      ? "You haven't bookmarked any notes yet. Click the bookmark icon on any article to save it for later!"
+                      ? "You haven't saved any posts yet. Click the bookmark icon on any post to save it for later!"
                       : myNotesOnly
                       ? "You haven't written any notes yet. Create your first note now!"
                       : "No articles found matching your criteria."}
                   </p>
                   <button
                     type="button"
-                    onClick={() => (bookmarksOnly ? setSelectedCategory("For You") : navigate('/create'))}
+                    onClick={() => (bookmarksOnly ? setSelectedCategory("Relevant") : navigate('/create'))}
                     className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all cursor-pointer"
                   >
                     {bookmarksOnly ? (
-                      <span>Browse Feed</span>
+                      <span>Browse Feed to Save Posts</span>
                     ) : (
                       <>
                         <FaPlus className="h-3.5 w-3.5" />
@@ -1717,7 +1879,11 @@ export function NewsHome({
                         </div>
 
                         <h3
-                          className={`text-xl md:text-2xl font-bold leading-snug tracking-tight ${
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenArticle(art);
+                          }}
+                          className={`text-xl md:text-2xl font-bold leading-snug tracking-tight hover:text-emerald-500 transition-colors cursor-pointer ${
                             isDarkMode ? "text-white" : "text-slate-900"
                           }`}
                         >

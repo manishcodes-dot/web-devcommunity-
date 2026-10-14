@@ -29,6 +29,7 @@ export function ClientHome({
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('Home');
   const [internalIsDarkMode, setInternalIsDarkMode] = useState(false);
+  const [feedResetKey, setFeedResetKey] = useState(0);
 
   const isDarkMode = controlledIsDarkMode !== undefined ? controlledIsDarkMode : internalIsDarkMode;
   const handleToggleTheme = () => {
@@ -55,11 +56,10 @@ export function ClientHome({
         onSelect={(item) => {
           if (item === 'Logout') {
             if (onSignOut) onSignOut();
-          } else if (item === 'CreateArticle') {
+          } else if (item === 'CreateArticle' || item === 'Write') {
             navigate('/create');
-          } else if (item === 'Add space' || item === 'Create Dev Hub') {
-            setActiveSection('Following');
           } else {
+            setFeedResetKey((prev) => prev + 1);
             setActiveSection(item);
           }
         }}
@@ -74,6 +74,7 @@ export function ClientHome({
         {activeSection === 'Home' ? (
           <div className="h-full">
             <NewsHome
+              key={`home-${feedResetKey}`}
               userEmail={userEmail}
               currentUser={currentUser}
               onSignOut={onSignOut}
@@ -83,9 +84,10 @@ export function ClientHome({
               customNotes={customNotes}
             />
           </div>
-        ) : activeSection === 'Bookmarks' ? (
+        ) : activeSection === 'Saved Post' || activeSection === 'Saved Posts' || activeSection === 'Bookmarks' || activeSection === 'Library' ? (
           <div className="h-full">
             <NewsHome
+              key={`saved-${feedResetKey}`}
               userEmail={userEmail}
               currentUser={currentUser}
               bookmarksOnly={true}
@@ -96,9 +98,10 @@ export function ClientHome({
               customNotes={customNotes}
             />
           </div>
-        ) : activeSection === 'My Notes' ? (
+        ) : activeSection === 'My Notes' || activeSection === 'Stories' ? (
           <div className="h-full">
             <NewsHome
+              key={`stories-${feedResetKey}`}
               userEmail={userEmail}
               currentUser={currentUser}
               myNotesOnly={true}
@@ -135,7 +138,7 @@ export function ClientHome({
             isDarkMode={isDarkMode}
             initialDevHandle={activeSection.startsWith('@') ? activeSection.replace(/^@/, '') : null}
           />
-        ) : activeSection === 'Dashboard' ? (
+        ) : activeSection === 'Dashboard' || activeSection === 'Stats' ? (
           <DashboardView
             currentUser={currentUser}
             userEmail={userEmail}
