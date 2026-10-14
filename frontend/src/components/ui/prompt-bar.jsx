@@ -208,7 +208,7 @@ export function PromptBar({ onSend, onAttach, className = "", isDarkMode = false
           setIsFocused(false);
         }
       }}
-      className={`relative flex w-full max-w-[800px] items-center gap-1.5 sm:gap-2 rounded-full border px-3 py-1.5 sm:py-2 transition-all duration-200 shadow-sm hover:shadow-md ${
+      className={`relative flex w-full max-w-[800px] items-center gap-2 rounded-full border pl-5 pr-2 py-1.5 sm:py-2 transition-all duration-200 shadow-sm hover:shadow-md ${
         isDarkMode
           ? `bg-[#18181b] ${
               isFocused
@@ -222,26 +222,17 @@ export function PromptBar({ onSend, onAttach, className = "", isDarkMode = false
             }`
       } ${className}`}
     >
-      <AttachmentButton
-        onAttach={onAttach || (() => window.location.assign('/create'))}
-        isDarkMode={isDarkMode}
-      />
-      
       <div className="flex-1 min-w-0">
         <PromptTextarea
           value={promptText}
           onChange={setPromptText}
           onSubmit={handleSend}
           isDarkMode={isDarkMode}
-          placeholder={placeholder || (isListening ? "Listening to your voice..." : undefined)}
+          placeholder={placeholder}
         />
       </div>
 
-      <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-        <ModeSelector mode={selectedMode} onSelectMode={setSelectedMode} isDarkMode={isDarkMode} />
-        <VoiceButton onVoiceClick={handleVoiceInput} isDarkMode={isDarkMode} />
-        <SendButton isActive={promptText.trim().length > 0} onClick={handleSend} isDarkMode={isDarkMode} />
-      </div>
+      <SendButton isActive={promptText.trim().length > 0} onClick={handleSend} isDarkMode={isDarkMode} />
     </div>
   );
 }

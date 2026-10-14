@@ -22,12 +22,12 @@ import { fetchArticlesApi, deleteArticleApi } from '@/services/articleService';
 import { updateUserProfileApi } from '@/services/userService';
 import { useAuth } from '@/context/AuthContext';
 
-export function UserProfileView({ currentUser, userEmail, isDarkMode = false, onBackToFeed }) {
+export function UserProfileView({ currentUser, userEmail, isDarkMode = false, onBackToFeed, initialEditing = false }) {
   const navigate = useNavigate();
   const { updateUser } = useAuth();
   const [userNotes, setUserNotes] = useState([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(initialEditing);
 
   // Edit form state
   const [editName, setEditName] = useState(currentUser?.name || userEmail?.split('@')[0] || '');
@@ -35,6 +35,20 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
   const [editAvatar, setEditAvatar] = useState(currentUser?.avatar || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (initialEditing) {
+      setIsEditing(true);
+    }
+  }, [initialEditing]);
+
+  useEffect(() => {
+    if (currentUser) {
+      setEditName(currentUser.name || userEmail?.split('@')[0] || '');
+      setEditBio(currentUser.bio || '');
+      setEditAvatar(currentUser.avatar || '');
+    }
+  }, [currentUser, userEmail]);
 
   const toggleEditing = () => {
     if (!isEditing) {

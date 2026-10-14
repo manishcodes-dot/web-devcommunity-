@@ -145,12 +145,13 @@ export function ClientHome({
             isDarkMode={isDarkMode}
             onNavigateSection={(sec) => setActiveSection(sec)}
           />
-        ) : activeSection === 'Profile' ? (
+        ) : activeSection === 'Profile' || activeSection === 'Edit Profile' || activeSection === 'User Profile' ? (
           <UserProfileView
             currentUser={currentUser}
             userEmail={userEmail}
             isDarkMode={isDarkMode}
             onBackToFeed={() => setActiveSection('Home')}
+            initialEditing={activeSection === 'Edit Profile'}
           />
         ) : activeSection === 'Settings' ? (
           <SettingsView

@@ -7,6 +7,8 @@ import {
   Moon,
   Sun,
   ChevronDown,
+  User,
+  Edit3,
 } from 'lucide-react';
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
 
@@ -41,21 +43,11 @@ function StoriesIcon({ className = "w-5 h-5" }) {
   );
 }
 
-function StatsIcon({ className = "w-5 h-5" }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="4" y="14" width="4" height="6.5" rx="1" />
-      <rect x="10" y="10" width="4" height="10.5" rx="1" />
-      <rect x="16" y="5.5" width="4" height="15" rx="1" />
-    </svg>
-  );
-}
 
 const NAV_ITEMS = [
   { id: 'Home', label: 'Home', icon: HomeIcon },
   { id: 'Saved Post', label: 'Saved Post', icon: SavedPostIcon },
   { id: 'Stories', label: 'Stories', icon: StoriesIcon },
-  { id: 'Stats', label: 'Stats', icon: StatsIcon },
 ];
 
 export function HeroSidebar({
@@ -334,28 +326,66 @@ export function HeroSidebar({
               ? 'bg-[#18181b] text-zinc-200'
               : 'bg-white text-slate-800'
           }`}>
-            <div className="flex items-center gap-2.5 pb-2 border-b border-slate-100 dark:border-zinc-800/60">
+            {/* Clickable Profile Card -> Redirect to Edit Profile */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => {
+                handleNavClick('Edit Profile');
+                setIsProfileOpen(false);
+              }}
+              title="Click to view & edit your profile"
+              className={`flex items-center gap-2.5 p-2 rounded-xl transition-all cursor-pointer group ${
+                isDarkMode
+                  ? 'hover:bg-zinc-800/80 bg-zinc-800/30'
+                  : 'hover:bg-slate-100 bg-slate-50/60'
+              }`}
+            >
               {currentUser?.avatar ? (
                 <img
                   src={currentUser.avatar}
                   alt="Profile Avatar"
-                  className="w-8 h-8 rounded-full object-cover shrink-0"
+                  className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-emerald-500/30"
                 />
               ) : (
                 <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-white text-xs shrink-0">
                   {(currentUser?.name || userEmail || 'U').substring(0, 2).toUpperCase()}
                 </div>
               )}
-              <div className="overflow-hidden flex-1">
-                <div className="font-semibold text-xs truncate">
+              <div className="overflow-hidden flex-1 min-w-0">
+                <div className="font-semibold text-xs truncate group-hover:text-emerald-500 transition-colors">
                   {currentUser?.name || userEmail?.split('@')[0] || 'User'}
                 </div>
                 <div className="text-[11px] truncate text-zinc-400">
                   {currentUser?.email || userEmail || 'user@example.com'}
                 </div>
               </div>
+              <div className="p-1 rounded-md text-zinc-400 group-hover:text-emerald-500 transition-colors shrink-0" title="Edit Profile">
+                <Edit3 className="w-3.5 h-3.5" />
+              </div>
             </div>
 
+            <div className="h-px bg-slate-100 dark:bg-zinc-800/60" />
+
+            {/* Edit Profile Menu Item */}
+            <button
+              type="button"
+              onClick={() => {
+                handleNavClick('Edit Profile');
+                setIsProfileOpen(false);
+              }}
+              className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <User className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Edit Profile</span>
+              </div>
+              <Edit3 className="w-3 h-3 opacity-60" />
+            </button>
+
+            {/* Settings */}
             <button
               type="button"
               onClick={() => {
@@ -363,10 +393,13 @@ export function HeroSidebar({
                 setIsProfileOpen(false);
               }}
               className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
-                isDarkMode ? 'hover:bg-zinc-800 text-zinc-300' : 'hover:bg-slate-100 text-slate-700'
+                isDarkMode ? 'hover:bg-zinc-800 text-zinc-300 hover:text-white' : 'hover:bg-slate-100 text-slate-700 hover:text-slate-900'
               }`}
             >
-              <span>Settings</span>
+              <div className="flex items-center gap-2">
+                <Settings className="w-3.5 h-3.5 opacity-70" />
+                <span>Settings</span>
+              </div>
               <Settings className="w-3.5 h-3.5 opacity-60" />
             </button>
 
