@@ -15,6 +15,7 @@ import {
   Terminal,
   BookOpen,
 } from 'lucide-react';
+import { UserAvatar } from './user-avatar';
 
 const DEFAULT_FOLLOWED_DEVS = [
   {
@@ -569,7 +570,13 @@ export function FollowingView({
                     : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                 }`}
               >
-                <img src={dev.avatar} alt={dev.name} className="w-3.5 h-3.5 rounded-full object-cover" />
+                <UserAvatar
+                  src={dev.avatar}
+                  name={dev.name}
+                  seed={dev.handle || dev.name}
+                  size={14}
+                  className="w-3.5 h-3.5 rounded-full shrink-0"
+                />
                 <span>@{dev.handle}</span>
               </button>
             ))}
@@ -613,10 +620,12 @@ export function FollowingView({
                   {/* Author meta row */}
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <img
+                      <UserAvatar
                         src={note.authorAvatar}
-                        alt={note.authorName}
-                        className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-zinc-700"
+                        name={note.authorName}
+                        seed={note.authorHandle || note.authorName}
+                        size={40}
+                        className="w-10 h-10 rounded-full shrink-0 border border-slate-200 dark:border-zinc-700"
                       />
                       <div>
                         <div className="flex items-center gap-2">
@@ -766,10 +775,13 @@ export function FollowingView({
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
-                    <img
+                    <UserAvatar
                       src={dev.avatar}
-                      alt={dev.name}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-zinc-700 shadow-xs"
+                      name={dev.name}
+                      seed={dev.handle || dev.name}
+                      size={56}
+                      shape="rounded"
+                      className="w-14 h-14 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-700 shadow-xs"
                     />
                     <button
                       type="button"
@@ -859,10 +871,13 @@ export function FollowingView({
               >
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-3">
-                    <img
+                    <UserAvatar
                       src={dev.avatar}
-                      alt={dev.name}
-                      className="w-14 h-14 rounded-2xl object-cover border border-slate-200 dark:border-zinc-700 shadow-xs"
+                      name={dev.name}
+                      seed={dev.handle || dev.name}
+                      size={56}
+                      shape="rounded"
+                      className="w-14 h-14 rounded-2xl shrink-0 border border-slate-200 dark:border-zinc-700 shadow-xs"
                     />
                     <button
                       type="button"
@@ -925,10 +940,12 @@ export function FollowingView({
             {/* Modal Header */}
             <div className="p-6 border-b border-slate-200 dark:border-zinc-800 flex items-start justify-between gap-4">
               <div className="flex items-center gap-3">
-                <img
+                <UserAvatar
                   src={selectedNoteForModal.authorAvatar}
-                  alt={selectedNoteForModal.authorName}
-                  className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-zinc-700"
+                  name={selectedNoteForModal.authorName}
+                  seed={selectedNoteForModal.authorHandle || selectedNoteForModal.authorName}
+                  size={48}
+                  className="w-12 h-12 rounded-full shrink-0 border border-slate-200 dark:border-zinc-700"
                 />
                 <div>
                   <h3 className="font-bold text-base leading-tight">

@@ -20,6 +20,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cobe": "^0.6.5",
+    "craft-avatar": "^1.0.0",
     "framer-motion": "^12.43.0",
     "lucide-react": "^1.28.0",
     "motion": "^12.43.0",

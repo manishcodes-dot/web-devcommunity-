@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Mail,
@@ -17,7 +17,18 @@ import {
   Code2,
   Sparkles,
   Flame,
+  Dice5,
+  Shuffle,
+  Check,
+  Palette,
+  Smile,
+  Layers,
+  Link as LinkIcon,
+  User,
+  Wand2,
 } from 'lucide-react';
+import avatar from 'craft-avatar';
+import { UserAvatar, ILLUSTRATED_AVATARS, getHairstyles, getPalettes, getShapes } from './user-avatar';
 import { fetchArticlesApi, deleteArticleApi } from '@/services/articleService';
 import { updateUserProfileApi } from '@/services/userService';
 import { useAuth } from '@/context/AuthContext';
@@ -36,6 +47,58 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
+  // Craft Avatar Studio state
+  const [craftTab, setCraftTab] = useState('studio'); // 'studio' | 'illustrated' | 'url'
+  const [craftSeed, setCraftSeed] = useState(currentUser?.name || userEmail?.split('@')[0] || 'developer');
+  const [craftPalette, setCraftPalette] = useState('ocean');
+  const [craftHair, setCraftHair] = useState('waves');
+  const [craftShape, setCraftShape] = useState('circle');
+  const [selectedIllustrationId, setSelectedIllustrationId] = useState(1);
+
+  // Generate live craft preview
+  const liveCraftPreview = useMemo(() => {
+    try {
+      if (craftTab === 'illustrated') {
+        const item = ILLUSTRATED_AVATARS.find((i) => i.id === selectedIllustrationId) || ILLUSTRATED_AVATARS[0];
+        return item?.dataUri || '';
+      }
+      return avatar({
+        seed: craftSeed || 'developer',
+        size: 256,
+        palette: craftPalette,
+        hair: craftHair,
+        shape: craftShape,
+      }).dataUri;
+    } catch {
+      return '';
+    }
+  }, [craftTab, craftSeed, craftPalette, craftHair, craftShape, selectedIllustrationId]);
+
+  const handleShufflePersona = () => {
+    const hairList = ['mohawk', 'waves', 'parted', 'bob', 'crop', 'bun', 'beanie', 'pompadour'];
+    const paletteList = ['ocean', 'sunset', 'forest', 'berry', 'mono', 'candy'];
+    const shapeList = ['circle', 'rounded', 'square'];
+    const randomHair = hairList[Math.floor(Math.random() * hairList.length)];
+    const randomPalette = paletteList[Math.floor(Math.random() * paletteList.length)];
+    const randomShape = shapeList[Math.floor(Math.random() * shapeList.length)];
+    const randomSeed = `dev-${Math.random().toString(36).substring(2, 8)}`;
+    setCraftHair(randomHair);
+    setCraftPalette(randomPalette);
+    setCraftShape(randomShape);
+    setCraftSeed(randomSeed);
+  };
+
+  const handleMatchMyName = () => {
+    const nameSeed = editName || currentUser?.name || userEmail?.split('@')[0] || 'developer';
+    setCraftSeed(nameSeed);
+  };
+
+  const handleApplyCraftAvatar = () => {
+    if (liveCraftPreview) {
+      setEditAvatar(liveCraftPreview);
+    }
+  };
+
   useEffect(() => {
     if (initialEditing) {
       setIsEditing(true);
@@ -44,17 +107,21 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
 
   useEffect(() => {
     if (currentUser) {
-      setEditName(currentUser.name || userEmail?.split('@')[0] || '');
+      const name = currentUser.name || userEmail?.split('@')[0] || '';
+      setEditName(name);
       setEditBio(currentUser.bio || '');
       setEditAvatar(currentUser.avatar || '');
+      setCraftSeed(name || 'developer');
     }
   }, [currentUser, userEmail]);
 
   const toggleEditing = () => {
     if (!isEditing) {
-      setEditName(currentUser?.name || userEmail?.split('@')[0] || '');
+      const name = currentUser?.name || userEmail?.split('@')[0] || '';
+      setEditName(name);
       setEditBio(currentUser?.bio || '');
       setEditAvatar(currentUser?.avatar || '');
+      setCraftSeed(name || 'developer');
     }
     setIsEditing((prev) => !prev);
   };
@@ -171,17 +238,22 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
           {/* Left Avatar & Info */}
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 text-center sm:text-left">
             <div className="relative group">
-              {currentUser?.avatar ? (
-                <img
-                  src={currentUser.avatar}
-                  alt={currentUser.name}
-                  className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover border-4 border-white dark:border-[#141417] shadow-xl"
-                />
-              ) : (
-                <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-tr from-amber-400 via-orange-400 to-rose-400 flex items-center justify-center font-extrabold text-white text-3xl border-4 border-white dark:border-[#141417] shadow-xl">
-                  {(currentUser?.name || userEmail || 'JG').substring(0, 2).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                src={currentUser?.avatar}
+                name={currentUser?.name || userEmail}
+                seed={currentUser?.name || userEmail}
+                size={128}
+                shape="rounded"
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-3xl object-cover border-4 border-white dark:border-[#141417] shadow-xl overflow-hidden bg-slate-100 dark:bg-zinc-800"
+              />
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="absolute -bottom-1 -right-1 p-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg transition-transform hover:scale-110 active:scale-95 cursor-pointer"
+                title="Craft Avatar with craft-avatar"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             <div className="space-y-1.5 pt-2">
@@ -229,27 +301,319 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
             }`}
           >
             {isEditing ? <X className="w-3.5 h-3.5" /> : <Edit3 className="w-3.5 h-3.5" />}
-            <span>{isEditing ? 'Cancel Editing' : 'Edit Profile'}</span>
+            <span>{isEditing ? 'Cancel Editing' : 'Edit Profile & Avatar'}</span>
           </button>
         </div>
 
         {/* Edit Profile Collapsible Form */}
         {isEditing && (
-          <div className={`p-6 border-t animate-in fade-in duration-150 ${
-            isDarkMode ? 'bg-zinc-900/60 border-zinc-800' : 'bg-slate-50 border-slate-200'
+          <div className={`p-6 sm:p-8 border-t animate-in fade-in duration-150 ${
+            isDarkMode ? 'bg-zinc-900/70 border-zinc-800' : 'bg-slate-50 border-slate-200'
           }`}>
-            <form onSubmit={handleUpdateProfile} className="space-y-4 max-w-2xl">
-              <h3 className={`text-sm font-bold uppercase tracking-wider text-emerald-500`}>
-                Edit Account Details
-              </h3>
+            <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-3xl">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-500 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span>Profile & Avatar Studio</span>
+                </h3>
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Customize your personal identity using the integrated <code className="text-emerald-400 font-mono">craft-avatar</code> package.
+                </p>
+              </div>
 
+              {/* Craft Avatar Studio Section */}
+              <div className={`p-5 rounded-2xl border space-y-4 ${
+                isDarkMode ? 'bg-zinc-950/60 border-zinc-800' : 'bg-white border-slate-200 shadow-sm'
+              }`}>
+                <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-emerald-500" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-zinc-700 dark:text-zinc-200">
+                      Avatar Generator
+                    </span>
+                  </div>
+
+                  {/* Studio Tabs */}
+                  <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 text-[11px] font-semibold">
+                    <button
+                      type="button"
+                      onClick={() => setCraftTab('studio')}
+                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                        craftTab === 'studio'
+                          ? 'bg-emerald-500 text-white shadow-xs font-bold'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      ✨ Comic Persona
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCraftTab('illustrated')}
+                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                        craftTab === 'illustrated'
+                          ? 'bg-emerald-500 text-white shadow-xs font-bold'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      👥 16 Characters
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCraftTab('url')}
+                      className={`px-3 py-1 rounded-lg transition-all cursor-pointer ${
+                        craftTab === 'url'
+                          ? 'bg-emerald-500 text-white shadow-xs font-bold'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      🔗 Custom URL
+                    </button>
+                  </div>
+                </div>
+
+                {/* Tab 1: Comic Persona Studio */}
+                {craftTab === 'studio' && (
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+                    {/* Left: Live Preview */}
+                    <div className="md:col-span-4 flex flex-col items-center justify-center p-4 rounded-xl bg-slate-50 dark:bg-zinc-900/60 border border-slate-200 dark:border-zinc-800/80 text-center space-y-3">
+                      <div className="relative">
+                        <img
+                          src={liveCraftPreview}
+                          alt="Crafted Preview"
+                          className="w-24 h-24 rounded-full object-cover shadow-md ring-4 ring-emerald-500/20"
+                        />
+                        <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-emerald-500 text-white text-[9px] font-bold">
+                          SVG
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs font-bold text-slate-800 dark:text-zinc-200">
+                          {craftSeed || 'Personal Avatar'}
+                        </div>
+                        <div className="text-[10px] text-zinc-400 capitalize">
+                          {craftHair} • {craftPalette}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleApplyCraftAvatar}
+                        className={`w-full py-1.5 px-3 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                          editAvatar === liveCraftPreview
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-xs'
+                        }`}
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>{editAvatar === liveCraftPreview ? 'Selected as Avatar' : 'Use This Persona'}</span>
+                      </button>
+                    </div>
+
+                    {/* Right: Customization Controls */}
+                    <div className="md:col-span-8 space-y-3.5">
+                      {/* Seed / Identity Name */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-zinc-400 flex items-center justify-between">
+                          <span>Identity Seed (Name, Handle, or Keyword)</span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={handleMatchMyName}
+                              className="text-[10px] text-emerald-500 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <User className="w-3 h-3" />
+                              <span>Match Name</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleShufflePersona}
+                              className="text-[10px] text-amber-500 hover:underline cursor-pointer flex items-center gap-1"
+                            >
+                              <Dice5 className="w-3 h-3" />
+                              <span>Shuffle</span>
+                            </button>
+                          </div>
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={craftSeed}
+                            onChange={(e) => setCraftSeed(e.target.value)}
+                            placeholder="e.g. sarah_frontend or your name"
+                            className={`flex-1 h-9 px-3 rounded-xl text-xs font-medium border outline-none ${
+                              isDarkMode
+                                ? 'bg-zinc-900 border-zinc-700 text-white focus:border-emerald-500'
+                                : 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500'
+                            }`}
+                          />
+                          <button
+                            type="button"
+                            onClick={handleShufflePersona}
+                            className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/20 transition-all cursor-pointer flex items-center gap-1"
+                            title="Shuffle random features"
+                          >
+                            <Shuffle className="w-3.5 h-3.5" />
+                            <span className="hidden sm:inline">Random</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Hairstyles */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-zinc-400">Hairstyle</label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {['mohawk', 'waves', 'parted', 'bob', 'crop', 'bun', 'beanie', 'pompadour'].map((h) => (
+                            <button
+                              key={h}
+                              type="button"
+                              onClick={() => setCraftHair(h)}
+                              className={`px-2.5 py-1 rounded-lg text-[11px] font-medium capitalize transition-all cursor-pointer ${
+                                craftHair === h
+                                  ? 'bg-emerald-500 text-white font-bold shadow-xs'
+                                  : 'bg-slate-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                              }`}
+                            >
+                              {h}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Color Palette */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-zinc-400">Color Palette</label>
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            { id: 'ocean', name: 'Ocean', color: '#2563EB' },
+                            { id: 'sunset', name: 'Sunset', color: '#F97316' },
+                            { id: 'forest', name: 'Forest', color: '#047857' },
+                            { id: 'berry', name: 'Berry', color: '#F472B6' },
+                            { id: 'mono', name: 'Mono', color: '#64748B' },
+                            { id: 'candy', name: 'Candy', color: '#FDE047' },
+                          ].map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setCraftPalette(p.id)}
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all cursor-pointer ${
+                                craftPalette === p.id
+                                  ? 'bg-emerald-500 text-white font-bold shadow-xs'
+                                  : 'bg-slate-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                              }`}
+                            >
+                              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                              <span>{p.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Frame Shape */}
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-semibold text-zinc-400">Frame Shape</label>
+                        <div className="flex gap-2">
+                          {['circle', 'rounded', 'square'].map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setCraftShape(s)}
+                              className={`px-3 py-1 rounded-lg text-[11px] font-medium capitalize transition-all cursor-pointer ${
+                                craftShape === s
+                                  ? 'bg-emerald-500 text-white font-bold shadow-xs'
+                                  : 'bg-slate-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700'
+                              }`}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 2: 16 Curated Illustrated Characters */}
+                {craftTab === 'illustrated' && (
+                  <div className="space-y-3">
+                    <p className="text-xs text-zinc-400">
+                      Pick any of the 16 curated hand-drawn illustrated characters from <code className="text-emerald-400">craft-avatar</code>:
+                    </p>
+                    <div className="grid grid-cols-4 sm:grid-cols-8 gap-3 max-h-64 overflow-y-auto p-1">
+                      {ILLUSTRATED_AVATARS.map((ill) => {
+                        const isSelected = selectedIllustrationId === ill.id || editAvatar === ill.dataUri;
+                        return (
+                          <button
+                            key={ill.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedIllustrationId(ill.id);
+                              setEditAvatar(ill.dataUri);
+                            }}
+                            className={`relative p-1 rounded-2xl border-2 transition-all cursor-pointer group hover:scale-105 ${
+                              isSelected
+                                ? 'border-emerald-500 ring-2 ring-emerald-500/30 bg-emerald-500/10'
+                                : 'border-slate-200 dark:border-zinc-800 hover:border-slate-400 dark:hover:border-zinc-600'
+                            }`}
+                            title={`Select Character #${ill.id}`}
+                          >
+                            <img
+                              src={ill.dataUri}
+                              alt={`Character ${ill.id}`}
+                              className="w-full aspect-square rounded-xl object-cover"
+                            />
+                            {isSelected && (
+                              <span className="absolute top-1 right-1 p-0.5 rounded-full bg-emerald-500 text-white">
+                                <Check className="w-2.5 h-2.5" />
+                              </span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tab 3: Custom URL */}
+                {craftTab === 'url' && (
+                  <div className="space-y-3">
+                    <label className="text-xs font-semibold text-zinc-400">Custom Image Link</label>
+                    <div className="flex gap-3 items-center">
+                      <input
+                        type="url"
+                        placeholder="https://example.com/my-photo.jpg"
+                        value={editAvatar}
+                        onChange={(e) => setEditAvatar(e.target.value)}
+                        className={`flex-1 h-10 px-3.5 rounded-xl text-xs font-medium border outline-none ${
+                          isDarkMode
+                            ? 'bg-zinc-900 border-zinc-700 text-white focus:border-emerald-500'
+                            : 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500'
+                        }`}
+                      />
+                      {editAvatar && (
+                        <img
+                          src={editAvatar}
+                          alt="Preview"
+                          className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-zinc-700 shrink-0"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Standard Profile Fields */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-400">Full Name</label>
                   <input
                     type="text"
                     value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
+                    onChange={(e) => {
+                      setEditName(e.target.value);
+                      if (!craftSeed || craftSeed === 'developer') {
+                        setCraftSeed(e.target.value);
+                      }
+                    }}
                     className={`w-full h-10 px-3.5 rounded-xl text-xs font-medium border outline-none ${
                       isDarkMode
                         ? 'bg-zinc-900 border-zinc-700 text-white focus:border-emerald-500'
@@ -260,18 +624,32 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-400">Avatar Image URL</label>
-                  <input
-                    type="url"
-                    placeholder="https://..."
-                    value={editAvatar}
-                    onChange={(e) => setEditAvatar(e.target.value)}
-                    className={`w-full h-10 px-3.5 rounded-xl text-xs font-medium border outline-none ${
-                      isDarkMode
-                        ? 'bg-zinc-900 border-zinc-700 text-white focus:border-emerald-500'
-                        : 'bg-white border-slate-300 text-slate-900 focus:border-emerald-500'
-                    }`}
-                  />
+                  <label className="text-xs font-semibold text-zinc-400">Active Avatar Data / URL</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={editAvatar ? (editAvatar.startsWith('data:image') ? '✨ Custom SVG Persona (Craft-Avatar)' : editAvatar) : 'Default generated persona'}
+                      className={`w-full h-10 px-3.5 rounded-xl text-xs font-mono truncate border outline-none cursor-default ${
+                        isDarkMode
+                          ? 'bg-zinc-900/50 border-zinc-800 text-zinc-400'
+                          : 'bg-slate-100 border-slate-200 text-slate-500'
+                      }`}
+                    />
+                    {editAvatar && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditAvatar('');
+                          handleMatchMyName();
+                        }}
+                        className="p-2.5 rounded-xl text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 border border-transparent hover:border-red-500/20 text-xs font-semibold cursor-pointer shrink-0"
+                        title="Reset to generated avatar"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -290,14 +668,23 @@ export function UserProfileView({ currentUser, userEmail, isDarkMode = false, on
                 />
               </div>
 
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                <span>{isSaving ? 'Saving Changes...' : 'Save Profile Changes'}</span>
-              </button>
+              <div className="flex items-center justify-between pt-2">
+                <button
+                  type="button"
+                  onClick={toggleEditing}
+                  className="px-4 py-2.5 rounded-xl text-xs font-semibold text-zinc-400 hover:text-zinc-200 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 shadow-sm active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Saving Changes...' : 'Save Profile Changes'}</span>
+                </button>
+              </div>
             </form>
           </div>
         )}

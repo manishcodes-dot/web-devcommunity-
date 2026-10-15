@@ -11,6 +11,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { UserAvatar } from "./user-avatar";
 
 // Custom outline SVG icons matching the design
 function HomeIcon({ className = "w-5 h-5" }) {
@@ -294,10 +295,12 @@ export function HeroSidebar({
                     }`}
                   />
                 )}
-                <img
+                <UserAvatar
                   src={dev.avatar}
-                  alt={dev.name}
-                  className="w-5 h-5 rounded-full object-cover flex-shrink-0"
+                  name={dev.name}
+                  seed={dev.handle || dev.name}
+                  size={20}
+                  className="w-5 h-5 rounded-full shrink-0"
                 />
                 {!isCollapsed && (
                   <div className="flex flex-col items-start min-w-0">
@@ -341,17 +344,13 @@ export function HeroSidebar({
                   : 'hover:bg-slate-100 bg-slate-50/60'
               }`}
             >
-              {currentUser?.avatar ? (
-                <img
-                  src={currentUser.avatar}
-                  alt="Profile Avatar"
-                  className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-emerald-500/30"
-                />
-              ) : (
-                <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-white text-xs shrink-0">
-                  {(currentUser?.name || userEmail || 'U').substring(0, 2).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                src={currentUser?.avatar}
+                name={currentUser?.name || userEmail}
+                seed={currentUser?.name || userEmail}
+                size={32}
+                className="w-8 h-8 rounded-full shrink-0 ring-1 ring-emerald-500/30"
+              />
               <div className="overflow-hidden flex-1 min-w-0">
                 <div className="font-semibold text-xs truncate group-hover:text-emerald-500 transition-colors">
                   {currentUser?.name || userEmail?.split('@')[0] || 'User'}
@@ -449,17 +448,13 @@ export function HeroSidebar({
           }`}
         >
           <div className="flex items-center gap-3">
-            {currentUser?.avatar ? (
-              <img
-                src={currentUser.avatar}
-                alt="Profile Avatar"
-                className="w-7 h-7 rounded-full object-cover shrink-0"
-              />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center font-bold text-white text-[11px] shrink-0">
-                {(currentUser?.name || userEmail || 'U').substring(0, 2).toUpperCase()}
-              </div>
-            )}
+            <UserAvatar
+              src={currentUser?.avatar}
+              name={currentUser?.name || userEmail}
+              seed={currentUser?.name || userEmail}
+              size={28}
+              className="w-7 h-7 rounded-full shrink-0"
+            />
             {!isCollapsed && (
               <span className={`font-medium text-xs sm:text-sm truncate ${isDarkMode ? 'text-zinc-300' : 'text-slate-700'}`}>
                 {currentUser?.name || userEmail?.split('@')[0] || 'User'}

@@ -29,6 +29,7 @@ import { Sparkles, Clock, Flame, Check, X, MessageSquare, Zap, Copy, Share2, Mor
 
 import { useAuth } from "@/context/AuthContext";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { UserAvatar, getPersonAvatarUrl } from "@/components/ui/user-avatar";
 import AiChatBot from "@/components/ui/ai-chat-bot";
 import {
   fetchArticlesApi,
@@ -1276,17 +1277,13 @@ export function NewsHome({
 
                   {/* User Name & Author info right beside three-dots */}
                   <div className="flex items-center gap-3">
-                    {selectedArticle.authorAvatar && typeof selectedArticle.authorAvatar === 'string' && selectedArticle.authorAvatar.startsWith('http') ? (
-                      <img
-                        src={selectedArticle.authorAvatar}
-                        alt={selectedArticle.author || 'Author'}
-                        className="h-10 w-10 rounded-full object-cover shrink-0 shadow-xs"
-                      />
-                    ) : (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
-                        {(selectedArticle.author || 'Author').substring(0, 2).toUpperCase()}
-                      </div>
-                    )}
+                    <UserAvatar
+                      src={selectedArticle.authorAvatar}
+                      name={selectedArticle.author || 'Author'}
+                      seed={selectedArticle.author || selectedArticle.authorHandle || 'author'}
+                      size={40}
+                      className="h-10 w-10 rounded-full shrink-0 shadow-xs border border-slate-200 dark:border-zinc-700"
+                    />
                     <div>
                       <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
                         {selectedArticle.author || 'Author'}
@@ -1582,19 +1579,13 @@ export function NewsHome({
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-3">
-                            {c.user?.avatar &&
-                            typeof c.user.avatar === "string" &&
-                            c.user.avatar.startsWith("http") ? (
-                              <img
-                                src={c.user.avatar}
-                                alt={c.user?.name || "User"}
-                                className="h-8 w-8 rounded-full object-cover shrink-0"
-                              />
-                            ) : (
-                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold bg-emerald-500 text-white shadow-xs">
-                                {(c.user?.name || "User").substring(0, 2).toUpperCase()}
-                              </div>
-                            )}
+                            <UserAvatar
+                              src={c.user?.avatar}
+                              name={c.user?.name || "User"}
+                              seed={c.user?.name || c.user?.email || c.user?._id || "developer"}
+                              size={32}
+                              className="h-8 w-8 rounded-full shrink-0 border border-slate-200 dark:border-zinc-700"
+                            />
                             <div>
                               <h5 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white">
                                 {c.user?.name || "Anonymous User"}
@@ -1829,17 +1820,13 @@ export function NewsHome({
                       {/* Left Column: Author, Title & Excerpt */}
                       <div className="flex-1 min-w-0 space-y-3">
                         <div className="flex flex-wrap items-center gap-2 text-xs">
-                          {art.authorAvatar && typeof art.authorAvatar === 'string' && art.authorAvatar.startsWith('http') ? (
-                            <img
-                              src={art.authorAvatar}
-                              alt={art.author || 'Author'}
-                              className="h-7 w-7 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
-                            />
-                          ) : (
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold bg-emerald-500 text-white shadow-xs">
-                              {(art.author || 'Author').substring(0, 2).toUpperCase()}
-                            </div>
-                          )}
+                          <UserAvatar
+                            src={art.authorAvatar}
+                            name={art.author || 'Author'}
+                            seed={art.author || art.authorHandle || 'author'}
+                            size={28}
+                            className="h-7 w-7 rounded-full shrink-0 border border-slate-200 dark:border-zinc-700"
+                          />
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <span
                               className={`font-bold ${
@@ -2297,10 +2284,12 @@ export function NewsHome({
                   ].map((c) => (
                     <div key={c.handle} className="flex items-center justify-between gap-3 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <img
+                        <UserAvatar
                           src={c.avatar}
-                          alt={c.name}
-                          className="h-8 w-8 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700"
+                          name={c.name}
+                          seed={c.handle || c.name}
+                          size={32}
+                          className="h-8 w-8 rounded-full shrink-0 border border-slate-200 dark:border-zinc-700"
                         />
                         <div className="min-w-0">
                           <p className="font-bold truncate text-slate-800 dark:text-zinc-200">

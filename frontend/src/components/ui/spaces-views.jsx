@@ -9,6 +9,7 @@ import {
   Trash2,
   Layers,
 } from 'lucide-react';
+import { UserAvatar, getPersonAvatarUrl } from './user-avatar';
 
 /* -------------------------------------------------------------------------- */
 /*                            1. DESIGN TOKENS VIEW                           */
@@ -311,7 +312,7 @@ export function TeamView({ currentUser, userEmail, isDarkMode = false }) {
       name: inviteName.trim(),
       email: inviteEmail.trim(),
       role: inviteRole,
-      avatar: '',
+      avatar: getPersonAvatarUrl(inviteName.trim() || inviteEmail.trim()),
     };
 
     const updated = [...members, newMember];
@@ -446,13 +447,13 @@ export function TeamView({ currentUser, userEmail, isDarkMode = false }) {
         {members.map((member) => (
           <div key={member.id} className="p-4 sm:p-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3.5 min-w-0">
-              {member.avatar ? (
-                <img src={member.avatar} alt={member.name} className="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200 dark:border-zinc-700" />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-emerald-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                  {member.name.substring(0, 2).toUpperCase()}
-                </div>
-              )}
+              <UserAvatar
+                src={member.avatar}
+                name={member.name}
+                seed={member.email || member.name}
+                size={40}
+                className="w-10 h-10 rounded-full shrink-0 border border-slate-200 dark:border-zinc-700"
+              />
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
                   <h4 className={`font-bold text-sm truncate ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>

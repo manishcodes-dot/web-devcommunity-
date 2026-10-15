@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import avatar from 'craft-avatar';
 import User from '../models/User.js';
 import ApiError from '../utils/ApiError.js';
 import { HTTP_STATUS } from '../constants/statusCodes.js';
@@ -9,10 +10,19 @@ const generateToken = (id) => {
   });
 };
 
-export const registerUser = async ({ name, email, password, role }) => {
+export const registerUser = async ({ name, email, password, role, avatar: customAvatar }) => {
   const existingUser = await User.findOne({ email });
   if (existingUser) {
     throw new ApiError(HTTP_STATUS.CONFLICT, 'User with this email already exists');
+  }
+
+  let finalAvatar = customAvatar;
+  if (!finalAvatar) {
+    try {
+      finalAvatar = avatar({ seed: name || email, shape: 'circle' }).dataUri;
+    } catch {
+      finalAvatar = '';
+    }
   }
 
   const user = await User.create({
@@ -20,6 +30,7 @@ export const registerUser = async ({ name, email, password, role }) => {
     email,
     password,
     role: role || 'user',
+    avatar: finalAvatar,
   });
 
   const token = generateToken(user._id);
@@ -44,13 +55,23 @@ export const loginUser = async ({ email, password }) => {
 
   const token = generateToken(user._id);
 
+  // If user has old placeholder or empty avatar, provide a deterministic craft-avatar
+  let userAvatar = user.avatar;
+  if (!userAvatar || userAvatar.includes('unsplash.com/photo-1534528741775-53994a69daeb')) {
+    try {
+      userAvatar = avatar({ seed: user.name || user.email, shape: 'circle' }).dataUri;
+    } catch {
+      // keep existing
+    }
+  }
+
   return {
     user: {
       id: user._id,
       name: user.name,
       email: user.email,
       role: user.role,
-      avatar: user.avatar,
+      avatar: userAvatar,
     },
     token,
   };

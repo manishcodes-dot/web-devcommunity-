@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import avatar from 'craft-avatar';
 import { ROLES } from '../constants/roles.js';
 
 const userSchema = new mongoose.Schema(
@@ -32,7 +33,7 @@ const userSchema = new mongoose.Schema(
     },
     avatar: {
       type: String,
-      default: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
+      default: '',
     },
     bio: {
       type: String,
@@ -46,6 +47,13 @@ const userSchema = new mongoose.Schema(
 );
 
 userSchema.pre('save', async function (next) {
+  if (!this.avatar) {
+    try {
+      this.avatar = avatar({ seed: this.name || this.email || 'developer', shape: 'circle' }).dataUri;
+    } catch {
+      // fallback
+    }
+  }
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
